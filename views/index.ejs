@@ -1,0 +1,79 @@
+<%- include('cabecalho2') -%>
+
+  <!-- ======= Hero Section ======= -->
+  <section id="hero" class="hero d-flex align-items-center">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-6 d-flex flex-column justify-content-center">
+          <h1 data-aos="fade-up">Educação, o passaporte para vida</h1>
+          <h2 data-aos="fade-up" data-aos-delay="400">“O conceito de sistema único de 
+            educação ou mesmo o de sistema unificado de 
+            educação tem como desafio maior o horizonte da 
+            igualdade, cujo motor maior não se radica na escola, 
+            mas no próprio sistema social.” (CURY, 2008, p.3). 
+</h2>
+       <%if(typeof Admin == "undefined"){%>
+          <div data-aos="fade-up" data-aos-delay="600">
+            <div class="text-center text-lg-start">
+              <a href="/login" class="btn-get-started scHomerollto d-inline-flex align-items-center justify-content-center align-self-center">
+                <span>Login</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        <%}%>
+
+        </div>
+        <div class="col-lg-6 hero-img" data-aos="zoom-out" data-aos-delay="200">
+          <div class="member-img">
+            <img src="/assets/img/logo.png" class="img-fluid social">
+            
+          </div>
+        </div>
+      </div>
+    </div>
+<style>
+  .member-img {
+  position: relative;
+  display: inline-block;
+}
+
+.member-img img {
+  display: block;
+  max-width: 100%;
+}
+
+.member-img a {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  transform: translate(-50%, 0%);
+}
+
+
+.member-img a i {
+  display: block;
+  color: #7d3617;
+}
+
+.member-img a:hover i {
+  color: #ecab96;
+}
+
+.whatsapp-link {
+  display: none;
+}
+
+.member-img:hover .whatsapp-link {
+  display: block;
+}
+
+</style>
+    
+
+  </section><!-- End Hero -->
+
+<%- include('rodape') -%>
+  
+  

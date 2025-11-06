@@ -1,0 +1,53 @@
+<%- include('cabecalho2') -%>
+
+  <section style="background-color: #fffcf7;">
+    <div class="container my-5 py-5">
+      <div class="row d-flex justify-content-center">
+        <div class="col-md-12 col-lg-10">
+          <table style="color:#fffcf7">
+           <tr>
+            <th>
+            <div class="card text-dark" style="height: 100px; width: 900px; text-align: center;">
+            <div class="card-body p-4">
+              <h4 class="mb-0" style="color: #b56e56">Avaliações do site</h4>
+              <p class="fw-light mb-4 pb-2">Mensagens anônimas dos usuários</p>
+            </div>
+            </div>    
+            </th>
+            </tr>
+            <%for(avaliador of Avaliacoes){%>
+            <tr>
+            <td>
+              <br><br>
+              <div class="d-flex flex-start">
+                <img class="rounded-circle shadow-1-strong me-3"
+                  src="assets/img/icon_avatar.jpeg" alt="avatar" style="margin: 3px;"
+                   width="60" height="60" />
+                <div>
+                  <h2 class="fw-bold mb-1"><%=avaliador.apelido%></h2>
+                  <div class="d-flex align-items-center mb-3">
+                    <p class="mb-0" style="color: #b56e56">
+                    <%=avaliador.email%>
+                    </p>
+                    <a class="link-muted"><i aria-hidden="true" class="fas fa-heart ms-2"></i></a>
+                  </div>
+                  <p class="mb-0">
+                 <%=avaliador.avaliacao%>
+                  </p>
+                </div>
+              </div>
+            <hr class="my-0" />
+          </td>
+        </tr>
+    <% } %>
+
+    </table>
+    </div>
+    </div>
+    </div>        
+  </section>
+
+<%- include('rodape') -%>
+
+
+    
