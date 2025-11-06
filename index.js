@@ -1,20 +1,20 @@
-require("dotenv").config();
-console.log("URI:", process.env.MONGO_URI);
-
 const express = require('express')
+const http = require('http')
+const { Server } = require('socket.io')
 const app = express()
 const path = require('path')
 const passport = require('passport')
 const Usuario = require('./models/usuario')
 const Disciplina = require('./models/disciplina');
-var session = require('express-session')
+const session = require('express-session')
 
-app.use(session({
+const sessionMiddleware = session({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: true,
     })
-)
+
+app.use(sessionMiddleware)
 
 app.use(passport.authenticate('session'));
 
@@ -26,7 +26,42 @@ const publicRouter = require('./routes/publicRoute')
 
 app.use('/',publicRouter)
 
-app.listen('3000', function(){
+const server = http.createServer(app)
+const io = new Server(server)
+
+// Compartilhar a sessão do Express com o Socket.IO
+io.engine.use(sessionMiddleware)
+
+io.on('connection', (socket) => {
+    console.log('Novo usuário conectado ao chat:', socket.id)
+
+    // Lógica para verificar autenticação e nickname
+    const session = socket.request.session;
+    if (!session || !session.passport || !session.passport.user) {
+        console.log('Tentativa de conexão não autenticada. Desconectando.');
+        socket.disconnect(true);
+        return;
+    }
+
+    // O usuário está autenticado. O apelido será enviado pelo cliente.
+    // Para fins de demonstração, vamos usar o ID do socket como apelido inicial se o cliente não enviar.
+    // A lógica de apelido será tratada no evento 'chat message' do cliente.
+
+    socket.on('chat message', (data) => {
+        // data deve ser um objeto { nickname: '...', msg: '...' }
+        if (data && data.nickname && data.msg) {
+            console.log(`[${data.nickname}]: ${data.msg}`);
+            // Retransmitir a mensagem para todos os clientes
+            io.emit('chat message', data);
+        }
+    })
+
+    socket.on('disconnect', () => {
+        console.log('Usuário desconectado do chat:', socket.id)
+    })
+})
+
+server.listen('3000', function(){
     console.log('Funcionando na porta 3000')
 })
 
@@ -52,8 +87,5 @@ app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
     }
   });
 
-
-
  
-
 

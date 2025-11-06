@@ -1,4 +1,12 @@
 const express = require('express')
+
+// Middleware para verificar se o usuário está autenticado
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/login'); // Redireciona para a página de login se não estiver autenticado
+}
 const router = express.Router()
 const publicController = require('../controller/publicController')
 const passport = require('../config/passport')
@@ -21,6 +29,9 @@ router.get('/visualiza/:disciplina',publicController.abreDisciplina)
 router.get('/doacao',publicController.abredoacao)
 router.post('/enviadoacao', publicController.enviadoacao)
 router.get('/mensagem',publicController.mostrarmensagem)
+router.get('/chat', ensureAuthenticated, (req, res) => {
+    res.render('chat');
+})
 router.get('/avaliar',publicController.abreavaliacao)
 router.post('/enviaavaliacao', publicController.avaliar)
 router.get('/avaliacoes',publicController.mostraravaliacao)
