@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             right: 20px;
             width: 60px;
             height: 60px;
-            background-color: #007bff;
+            background-color: #7d3617;
             color: white;
             border-radius: 50%;
             display: flex;
@@ -63,11 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
             flex-grow: 1;
             overflow-y: auto;
         }
-        #chat-window #messages li:nth-child(odd) { background: #f1f1f1; }
+        #chat-window #messages li:nth-child(odd) { background: #ecab96; }
         #chat-window #form {
             display: flex;
             padding: 5px;
-            background: #eee;
+            background: #ecab96;
         }
         #chat-window #input {
             flex-grow: 1;
