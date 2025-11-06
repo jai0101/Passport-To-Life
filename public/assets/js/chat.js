@@ -1,4 +1,4 @@
-// public/js/chat.js
+// public/assets/js/chat.js
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <form id="form" action="">
             <input id="nickname" autocomplete="off" placeholder="Seu Apelido" style="width: 100px; flex-grow: 0;" />
             <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-            <button>Enviar</button>
+            <button type="submit">Enviar</button>
         </form>
     `;
     document.body.appendChild(chatWindow);
@@ -74,6 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
             padding: 5px 10px;
             margin-right: 5px;
         }
+        #chat-window #form button {
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #chat-window #form button:hover {
+            background: #0056b3;
+        }
     `;
     document.head.appendChild(style);
 
@@ -82,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
     });
 
-    // Socket.io
+    // Socket.IO
     const socket = io();
 
     const form = chatWindow.querySelector('#form');
@@ -110,4 +121,5 @@ document.addEventListener('DOMContentLoaded', () => {
         messages.appendChild(item);
         messages.scrollTop = messages.scrollHeight;
     });
+
 });
