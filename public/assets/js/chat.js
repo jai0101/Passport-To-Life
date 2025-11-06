@@ -63,11 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
             flex-grow: 1;
             overflow-y: auto;
         }
-        #chat-window #messages li:nth-child(odd) { background: #ecab96; }
+        #chat-window #messages li:nth-child(odd) { background: #white; }
         #chat-window #form {
             display: flex;
             padding: 5px;
-            background: #ecab96;
+            background: #white;
         }
         #chat-window #input {
             flex-grow: 1;
