@@ -76,14 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         #chat-window #form button {
             padding: 5px 10px;
-            background: #007bff;
+            background: #7d3617;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
         #chat-window #form button:hover {
-            background: #0056b3;
+            background: #a16e5d;
         }
     `;
     document.head.appendChild(style);
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('li');
         const nicknameSpan = document.createElement('span');
         nicknameSpan.style.fontWeight = 'bold';
-        nicknameSpan.style.color = '#007bff';
+        nicknameSpan.style.color = '#7d3617';
         nicknameSpan.textContent = data.nickname + ': ';
         item.appendChild(nicknameSpan);
         item.appendChild(document.createTextNode(data.msg));
