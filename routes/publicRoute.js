@@ -25,26 +25,29 @@ router.post('/login', passport.authenticate('local', {
 }));
 router.get('/logout', publicController.logout);
 
-// ✅ PERFIL PROTEGIDO
-router.get('/perfil', publicController.abreperfil);
+// ✅ PERFIL DO USUÁRIO LOGADO (PROTEGIDO)
+router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// ✅ PERFIL PÚBLICO POR ID
+// ✅ PERFIL PÚBLICO DE OUTRO USUÁRIO (por ID)
 router.get('/perfil/:id', publicController.perfilunico);
+
+// ✅ LISTA DE USUÁRIOS (PROTEGIDA PARA NÃO QUEBRAR HEADER)
+router.get('/listar', bloqueio, publicController.listarUsuarios);
 
 // ✅ REGISTRO
 router.post('/registrar', upload.single("foto"), publicController.enviaregistrar);
 
 // ✅ CONTEÚDO
-router.get('/addconteudo', publicController.adicionarconteudo);
-router.post('/enviaconteudo', upload.single("arquivo"), publicController.enviaconteudo);
+router.get('/addconteudo', bloqueio, publicController.adicionarconteudo);
+router.post('/enviaconteudo', bloqueio, upload.single("arquivo"), publicController.enviaconteudo);
 
 // ✅ DOAÇÃO E AVALIAÇÃO
 router.post('/enviadoacao', publicController.enviadoacao);
 router.post('/enviaavaliacao', publicController.avaliar);
 
-// ✅ EDITAR / DELETAR
-router.get('/del/:id', publicController.deletar);
-router.get('/edit/:id', publicController.editar);
-router.post('/edit/:id', upload.single("foto"), publicController.enviaeditar);
+// ✅ EDITAR / DELETAR (PROTEGIDOS)
+router.get('/del/:id', bloqueio, publicController.deletar);
+router.get('/edit/:id', bloqueio, publicController.editar);
+router.post('/edit/:id', bloqueio, upload.single("foto"), publicController.enviaeditar);
 
 module.exports = router;

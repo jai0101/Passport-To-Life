@@ -1,22 +1,25 @@
 const Usuario = require('../models/usuario');
 const Disciplina = require('../models/disciplina');
 
+// Função auxiliar pra sempre passar Admin
+const getAdmin = (req) => (req.user ? req.user : null);
+
 // ✅ PÁGINA INDEX
 exports.abreindex = (req, res) => {
-  res.render('index');
+  res.render('index', { Admin: getAdmin(req) });
 };
 
 // ✅ OUTRAS PÁGINAS SIMPLES
-exports.abredescricao = (req, res) => res.render('descricao');
-exports.abredesenvolvedora = (req, res) => res.render('desenvolvedora');
-exports.abreconteudo = (req, res) => res.render('conteudo');
-exports.abrelogin = (req, res) => res.render('login');
-exports.abreregistrar = (req, res) => res.render('registrar');
-exports.abredoacao = (req, res) => res.render('doacao');
-exports.mostrarmensagem = (req, res) => res.render('mensagem');
-exports.abreavaliacao = (req, res) => res.render('avaliar');
-exports.mostraravaliacao = (req, res) => res.render('avaliacoes');
-exports.adicionarconteudo = (req, res) => res.render('addconteudo');
+exports.abredescricao = (req, res) => res.render('descricao', { Admin: getAdmin(req) });
+exports.abredesenvolvedora = (req, res) => res.render('desenvolvedora', { Admin: getAdmin(req) });
+exports.abreconteudo = (req, res) => res.render('conteudo', { Admin: getAdmin(req) });
+exports.abrelogin = (req, res) => res.render('login', { Admin: null });
+exports.abreregistrar = (req, res) => res.render('registrar', { Admin: null });
+exports.abredoacao = (req, res) => res.render('doacao', { Admin: getAdmin(req) });
+exports.mostrarmensagem = (req, res) => res.render('mensagem', { Admin: getAdmin(req) });
+exports.abreavaliacao = (req, res) => res.render('avaliar', { Admin: getAdmin(req) });
+exports.mostraravaliacao = (req, res) => res.render('avaliacoes', { Admin: getAdmin(req) });
+exports.adicionarconteudo = (req, res) => res.render('addconteudo', { Admin: getAdmin(req) });
 
 // ✅ LOGOUT
 exports.logout = (req, res, next) => {
@@ -50,15 +53,33 @@ exports.abreperfil = async (req, res) => {
   }
 };
 
-// ✅ PERFIL PÚBLICO (se você quiser manter)
+// ✅ PERFIL PÚBLICO POR ID
 exports.perfilunico = async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.params.id);
     if (!usuario) return res.redirect('/');
     const disciplinas = await Disciplina.find({ usuario: usuario._id });
 
-    res.render('perfilunico', { usuario, disciplinas });
+    res.render('perfilunico', { 
+      Admin: getAdmin(req),
+      usuario, 
+      disciplinas 
+    });
 
+  } catch (err) {
+    console.error(err);
+    res.redirect('/');
+  }
+};
+
+// ✅ LISTAR USUÁRIOS (agora existe e não quebra o header)
+exports.listarUsuarios = async (req, res) => {
+  try {
+    const usuarios = await Usuario.find();
+    res.render('listar', {
+      Admin: getAdmin(req),
+      usuarios
+    });
   } catch (err) {
     console.error(err);
     res.redirect('/');
@@ -88,7 +109,10 @@ exports.enviadoacao = (req, res) => {
 
 // ✅ DISCIPLINA
 exports.abreDisciplina = (req, res) => {
-  res.render('disciplina', { id: req.params.disciplina });
+  res.render('disciplina', {
+    Admin: getAdmin(req),
+    id: req.params.disciplina
+  });
 };
 
 // ✅ CONTEÚDO
@@ -103,7 +127,10 @@ exports.deletar = (req, res) => {
 
 // ✅ EDITAR
 exports.editar = (req, res) => {
-  res.render('editar', { id: req.params.id });
+  res.render('editar', {
+    Admin: getAdmin(req),
+    id: req.params.id
+  });
 };
 
 exports.enviaeditar = (req, res) => {
