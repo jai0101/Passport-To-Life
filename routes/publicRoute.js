@@ -32,7 +32,7 @@ router.post('/login', (req, res, next) => {
     req.logIn(user, (err) => {
       if (err) return next(err);
       console.log("✅ Usuário logado com sucesso:", user.username);
-      return res.send("Logado!"); // 👈 teste, sem redirecionar
+      router.get('/perfil', bloqueio, publicController.abreperfil); // 👈 teste, sem redirecionar
     });
   })(req, res, next);
 });

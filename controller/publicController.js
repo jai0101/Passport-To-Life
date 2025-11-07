@@ -38,28 +38,20 @@ exports.logout = (req, res, next) => {
 };
 
 // ✅ PERFIL PROTEGIDO COM LOGIN
-exports.abreperfil = async (req, res) => {
-  if (!req.user) return res.redirect('/login');
-
-  try {
+exports.abreperfil = async (req,res) => {
     const usuario = await Usuario.findById(req.user.id);
-    if (!usuario) {
-      req.logout(() => {});
-      return res.redirect('/login');
-    }
-
-    const usu_disciplinas = await Disciplina.find({ usuario: req.user.id });
-
+  
+    const usu_disciplinas = await Disciplina.find({
+      usuario: req.user.id // Busca as disciplinas que foram adicionadas pelo usuário logado
+    });
+  
     res.render('perfil', {
       Admin: usuario,
       Disciplinas: usu_disciplinas
     });
-
-  } catch (err) {
-    console.error("Erro ao abrir perfil:", err);
-    return res.redirect('/login');
   }
-};
+  
+
 
 // ✅ PERFIL PÚBLICO POR ID
 exports.perfilunico = async (req, res) => {
