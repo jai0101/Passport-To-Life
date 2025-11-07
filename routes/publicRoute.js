@@ -19,15 +19,10 @@ router.get('/avaliacoes', publicController.mostraravaliacao);
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
 // ✅ LOGIN / LOGOUT
-router.post("/login", 
-    passport.authenticate("local", {
-        failureRedirect: "/login",
-        failureFlash: false
-    }),
-    (req, res) => {
-        res.redirect("/perfil"); // ✅ se deu certo, manda pro perfil
-    }
-);
+router.get('/perfil', (req, res) => {
+  console.log("req.user:", req.user);
+  res.send("Teste de perfil");
+});
 router.get('/logout', publicController.logout);
 
 // ✅ PERFIL DO USUÁRIO LOGADO (PROTEGIDO)
