@@ -34,7 +34,7 @@ router.post('/login', (req, res, next) => {
       console.log("✅ Usuário logado com sucesso:", user.username);
 
       // Redireciona para o perfil do usuário logado
-      res.redirect('/perfil'); // ✅ isso é tudo que você precisa aqui
+      return res.redirect('/perfil');
     });
   })(req, res, next);
 });
@@ -42,11 +42,11 @@ router.post('/login', (req, res, next) => {
 // Perfil do usuário logado (protegido)
 router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// Logout
-router.get('/logout', publicController.logout);
-
 // Perfil público por ID
 router.get('/perfil/:id', publicController.perfilunico);
+
+// Logout
+router.get('/logout', publicController.logout);
 
 // Lista de usuários
 router.get('/listar', bloqueio, publicController.abrirlistar);
