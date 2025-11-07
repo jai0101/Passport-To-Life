@@ -6,38 +6,37 @@ const path = require('path');
 const passport = require('passport');
 const session = require('express-session');
 
-// 🔹 Ajuste os caminhos para os seus modelos
+// 🔹 Ajuste os caminhos dos seus modelos
 const Usuario = require('./models/usuario'); 
 const Disciplina = require('./models/disciplina'); 
 const publicRouter = require('./routes/publicRoute'); 
 
 // Configuração da sessão
 const sessionMiddleware = session({
-    secret: 'keyboard cat', // chave secreta para produção
+    secret: 'keyboard cat', // Troque por algo seguro em produção
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
 });
 
-// Inicialização do Passport
 app.use(sessionMiddleware);
+
+// Inicialização do Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configuração do Express
+// Configurações do Express
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔹 Middleware para passar o usuário logado para todas as views
+// Middleware para injetar o usuário logado em todas as views
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 });
 
-// Rotas públicas
 app.use('/', publicRouter);
 
-// Criar servidor HTTP e Socket.IO
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -45,18 +44,25 @@ const io = new Server(server);
 io.engine.use(sessionMiddleware);
 
 io.on('connection', (socket) => {
-    console.log('Novo usuário conectado ao chat:', socket.id);
-
     const session = socket.request.session;
+
+    // 🔹 Verifica se o usuário está logado
     const isAuthenticated = session && session.passport && session.passport.user;
 
     if (!isAuthenticated) {
-        console.log('Usuário não autenticado. Desconectando.');
+        console.log('Usuário não autenticado tentou se conectar ao chat:', socket.id);
         socket.disconnect(true);
         return;
     }
 
-    socket.on('chat message', (data) => {
+    console.log('Usuário conectado ao chat:', socket.id);
+
+    // Recebe mensagens
+    socket.on('chat message', async (data) => {
+        // 🔹 Segurança extra: verificação de usuário logado antes de enviar a mensagem
+        const sessionNow = socket.request.session;
+        if (!sessionNow || !sessionNow.passport || !sessionNow.passport.user) return;
+
         if (data && data.nickname && data.msg) {
             console.log(`[${data.nickname}]: ${data.msg}`);
             io.emit('chat message', data);
@@ -85,10 +91,13 @@ app.get('/listar', async (req, res) => {
 
     const admin = req.user ? await Usuario.findById(req.user.id) : undefined;
 
-    res.render("listar", { Usuarios: usuarios, Admin: admin, quantidadeConteudos: conteudosPorUsuario });
+    if (admin) {
+        res.render("listar", { Usuarios: usuarios, Admin: admin, quantidadeConteudos: conteudosPorUsuario });
+    } else {
+        res.render("listar", { Usuarios: usuarios, quantidadeConteudos: conteudosPorUsuario });
+    }
 });
 
-// Iniciar servidor
 server.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
 });

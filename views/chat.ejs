@@ -6,7 +6,7 @@
         body { font-family: Arial, sans-serif; margin: 0; }
         #chat-container {
             position: fixed;
-            bottom: 20px;
+            bottom: 90px;
             right: 20px;
             width: 320px;
             max-height: 400px;
@@ -18,6 +18,7 @@
             flex-direction: column;
             font-size: 14px;
             z-index: 9999;
+            display: none; /* inicial oculto */
         }
         #messages { list-style: none; margin: 0; padding: 10px; flex-grow: 1; overflow-y: auto; }
         #messages li:nth-child(odd) { background: #efefef; }
@@ -28,57 +29,87 @@
         #form button:hover { background: #0056b3; }
         #login-message { padding: 1rem; text-align: center; background: #f8d7da; color: #721c24; }
         #login-message a { color: #721c24; font-weight: bold; text-decoration: underline; }
+
+        /* Botão flutuante */
+        #chat-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #7d3617;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <% if (user) { %>
-            <!-- Conteúdo do chat para usuários logados -->
+
+    <% if (user) { %>
+        <!-- Botão do chat -->
+        <div id="chat-icon">💬</div>
+
+        <!-- Janela do chat -->
+        <div id="chat-container">
             <ul id="messages"></ul>
-            <form id="form" action="">
-                <input id="nickname" autocomplete="off" placeholder="Seu Apelido" style="width: 120px; flex-grow: 0;" />
+            <form id="form">
+                <input type="hidden" id="nickname" value="<%= user.nome %>"/> <!-- nickname automático -->
                 <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
                 <button type="submit">Enviar</button>
             </form>
-        <% } else { %>
-            <!-- Mensagem para usuários deslogados -->
-            <div id="login-message">
-                Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
-            </div>
-        <% } %>
-    </div>
+        </div>
+    <% } else { %>
+        <div id="login-message">
+            Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
+        </div>
+    <% } %>
 
     <script src="/socket.io/socket.io.js"></script>
-    
+
     <% if (user) { %>
-        <!-- Script de conexão e lógica do chat, só carregado se o usuário estiver logado -->
-        <script>
-            const socket = io();
-            const form = document.getElementById('form');
-            const input = document.getElementById('input');
-            const nicknameInput = document.getElementById('nickname');
-            const messages = document.getElementById('messages');
+    <script>
+        const chatIcon = document.getElementById('chat-icon');
+        const chatContainer = document.getElementById('chat-container');
 
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                if (input.value && nicknameInput.value) {
-                    const messageData = { nickname: nicknameInput.value, msg: input.value };
-                    socket.emit('chat message', messageData);
-                    input.value = '';
-                }
-            });
+        // Toggle da janela do chat
+        chatIcon.addEventListener('click', () => {
+            chatContainer.style.display = chatContainer.style.display === 'none' ? 'flex' : 'none';
+        });
 
-            socket.on('chat message', (data) => {
-                const item = document.createElement('li');
-                const nicknameSpan = document.createElement('span');
-                nicknameSpan.classList.add('nickname');
-                nicknameSpan.textContent = data.nickname + ': ';
-                item.appendChild(nicknameSpan);
-                item.appendChild(document.createTextNode(data.msg));
-                messages.appendChild(item);
-                messages.scrollTop = messages.scrollHeight;
-            });
-        </script>
+        // Socket.io
+        const socket = io();
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const nicknameInput = document.getElementById('nickname');
+        const messages = document.getElementById('messages');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(input.value) {
+                socket.emit('chat message', { nickname: nicknameInput.value, msg: input.value });
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (data) => {
+            const item = document.createElement('li');
+            const nickSpan = document.createElement('span');
+            nickSpan.classList.add('nickname');
+            nickSpan.textContent = data.nickname + ': ';
+            item.appendChild(nickSpan);
+            item.appendChild(document.createTextNode(data.msg));
+            messages.appendChild(item);
+            messages.scrollTop = messages.scrollHeight;
+        });
+    </script>
     <% } %>
+
 </body>
 </html>
