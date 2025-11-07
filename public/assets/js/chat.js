@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.body.appendChild(chatWindow);
 
-    // Estilos do chat
+    // Estilos
     const style = document.createElement('style');
     style.textContent = `
         #chat-icon {
@@ -87,24 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
             border-radius: 5px;
             cursor: pointer;
         }
-        #chat-window button:hover {
-            background: #0056b3;
-        }
-        #login-message a {
-            color: #721c24;
-            font-weight: bold;
-            text-decoration: underline;
-        }
+        #chat-window button:hover { background: #0056b3; }
+        #login-message a { color: #721c24; font-weight: bold; text-decoration: underline; }
     `;
     document.head.appendChild(style);
 
-    // Toggle janela do chat
+    // Toggle chat
     chatIcon.addEventListener('click', () => {
         chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
     });
 
-    // Socket.io se estiver logado
-    if(loggedIn){
+    if (loggedIn) {
         const socket = io();
         const form = chatWindow.querySelector('#form');
         const input = chatWindow.querySelector('#input');

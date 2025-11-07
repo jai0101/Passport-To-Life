@@ -1,12 +1,13 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const app = express();
 const path = require('path');
 const passport = require('passport');
+const session = require('express-session');
 const Usuario = require('./models/usuario');
 const Disciplina = require('./models/disciplina');
-const session = require('express-session');
+
+const app = express();
 
 const sessionMiddleware = session({
     secret: 'keyboard cat',
@@ -21,7 +22,7 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔹 Passar o usuário logado para todas as views
+// Disponibilizar o usuário logado em todas as views
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
@@ -33,7 +34,7 @@ app.use('/', publicRouter);
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Compartilhar a sessão do Express com o Socket.IO
+// Compartilhar sessão com Socket.IO
 io.engine.use(sessionMiddleware);
 
 io.on('connection', (socket) => {
@@ -58,9 +59,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, () => {
-    console.log('Funcionando na porta 3000');
-});
+server.listen(3000, () => console.log('Servidor rodando na porta 3000'));
 
 app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
     const caminho = path.join(__dirname, 'public', 'assets', 'fotos', req.params.arquivo);
