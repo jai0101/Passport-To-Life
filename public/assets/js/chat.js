@@ -1,102 +1,85 @@
+// chat.js - Final Corrigido
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.loggedIn) return; // Não mostra chat se não estiver logado
-
-    // Cria o ícone flutuante
-    const chatIcon = document.createElement('div');
-    chatIcon.id = 'chat-icon';
-    chatIcon.textContent = '💬';
-    document.body.appendChild(chatIcon);
-
-    // Cria a janela do chat (inicialmente escondida)
-    const chatWindow = document.createElement('div');
-    chatWindow.id = 'chat-window';
-    chatWindow.style.display = 'none';
-    chatWindow.innerHTML = `
-        <ul id="messages"></ul>
-        <form id="form">
-            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-            <button type="submit">Enviar</button>
-        </form>
-    `;
-    document.body.appendChild(chatWindow);
-
-    // Estilos do chat
-    const style = document.createElement('style');
-    style.textContent = `
-        #chat-icon {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background-color: #7d3617;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            z-index: 9999;
-        }
-        #chat-window {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 9999;
-        }
-        #messages {
-            list-style: none;
-            margin: 0;
-            padding: 10px;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-        #messages li:nth-child(odd) { background: #efefef; }
-        #form { display: flex; padding: 5px; background: #f1f1f1; border-top: 1px solid #ccc; }
-        #input { flex-grow: 1; padding: 5px 10px; margin-right: 5px; border-radius: 5px; border: 1px solid #ccc; }
-        #form button { padding: 5px 10px; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
-        #form button:hover { background: #0056b3; }
-    `;
-    document.head.appendChild(style);
-
-    // Toggle janela
-    chatIcon.addEventListener('click', () => {
-        chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
-    });
-
-    // Conexão Socket.IO
-    const socket = io();
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
+    const chatIcon = document.getElementById('chat-icon');
+    const chatWindow = document.getElementById('chat-window');
+    const nicknameArea = document.getElementById('nickname-area');
+    const messagesArea = document.getElementById('messages-area');
+    const nicknameInput = document.getElementById('nickname-input');
+    const saveNicknameBtn = document.getElementById('save-nickname-btn');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
     const messages = document.getElementById('messages');
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (!input.value) return;
+    let currentNickname = window.initialNickname || 'Anônimo';
+    
+    // Tenta carregar o apelido do localStorage se já tiver sido salvo
+    const savedNickname = localStorage.getItem('chatNickname');
+    if (savedNickname) {
+        currentNickname = savedNickname;
+        // Se o apelido foi salvo, já mostra a área de mensagens
+        if (nicknameArea && messagesArea) {
+            nicknameArea.style.display = 'none';
+            messagesArea.style.display = 'flex';
+        }
+    }
+    
+    // 1. VERIFICAÇÃO CRÍTICA: Se o usuário não está logado, #chat-icon não existe.
+    // A lógica do chat para usuários logados NÃO DEVE rodar.
+    if (!chatIcon) {
+        return;
+    }
 
-        socket.emit('chat message', { msg: input.value });
-        input.value = '';
+    // 2. INICIALIZAÇÃO: A partir daqui, o usuário está logado.
+    const socket = io();
+
+    // 3. EVENTO DE CLIQUE: Onde o erro estava.
+    chatIcon.addEventListener('click', () => {
+        // Alterna entre 'flex' (visível) e 'none' (escondido)
+        // O display do chat-window deve ser 'flex' para ser visível, conforme o CSS
+        chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
     });
 
+    // 4. Salvar Apelido
+    if (saveNicknameBtn) {
+        saveNicknameBtn.addEventListener('click', () => {
+            const newNickname = nicknameInput.value.trim();
+            if (newNickname) {
+                currentNickname = newNickname;
+                localStorage.setItem('chatNickname', newNickname);
+                
+                // Esconde a área de escolha e mostra a de mensagens
+                if (nicknameArea && messagesArea) {
+                    nicknameArea.style.display = 'none';
+                    messagesArea.style.display = 'flex';
+                }
+            } else {
+                alert('Por favor, digite um apelido válido.');
+            }
+        });
+    }
+
+    // 5. Enviar mensagem
+    if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            
+            if (!currentNickname) {
+                alert('Por favor, escolha um apelido primeiro.');
+                return;
+            }
+
+            if (!msg) return;
+            
+            socket.emit('chat message', { nickname: currentNickname, msg });
+            chatInput.value = '';
+        });
+    }
+
+    // 6. Receber mensagem
     socket.on('chat message', (data) => {
         const item = document.createElement('li');
-        const nicknameSpan = document.createElement('span');
-        nicknameSpan.classList.add('nickname');
-        nicknameSpan.style.fontWeight = 'bold';
-        nicknameSpan.style.color = '#007bff';
-        nicknameSpan.textContent = data.nickname + ': ';
-        item.appendChild(nicknameSpan);
-        item.appendChild(document.createTextNode(data.msg));
+        item.innerHTML = `<strong>${data.nickname}:</strong> ${data.msg}`;
         messages.appendChild(item);
         messages.scrollTop = messages.scrollHeight;
     });

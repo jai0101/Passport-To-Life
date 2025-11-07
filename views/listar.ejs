@@ -1,58 +1,60 @@
 <%- include('cabecalho') -%>
 
-  <section id= "portfolio" class="portfolio" class="vh-100" style="background-color: #b56e56;"> 
-    <div class="container py-5 h-100" >
-      <div class="row d-flex justify-content-center align-items-center h-100">
-        <table class="section-header" style="color:#fffcf7">
-          <tr>
-            <th><p style="color:#fffcf7">Usuários</p></th>
-          </tr>
-          
-          <% for (let i = 0; i < Usuarios.length; i++) { %>
-            <% const usuario = Usuarios[i]; %>
-            
-           <tr>
-             <td>
-        <div class="col col-md-9 col-lg-7 col-xl-5">
-          <div class="card" style="border-radius: 15px;">
-            <div class="card-body p-4">
-              <div class="d-flex text-black">
-                <div class="flex-shrink-0">
-                  <img src="assets/fotos/<%=usuario.foto%>"
-                  alt="Generic placeholder image" class="img-fluid" id="exifviewer-img-1" 
-                  exifid="1572404890" 
-                  oldsrc="assets/fotos/<%=usuario.foto%>"
-                    style="width: 180px; border-radius: 10px; height: 270.02px; object-fit: cover;">
-                </div>
-                <div class="flex-grow-1 ms-3">
-                  <p class="mb-2 pb-1" style="color: #2b2a2a;"><%=usuario.nome1%> <%=usuario.nome2%></p>
-                  <h5 class="mb-1"><%=usuario.profissao%></h5>
-                  <div class="d-flex justify-content-start rounded-3 p-2 mb-2"
-                    style="background-color: #efefef;">
-                    <div>
-                      <p class="small text-muted mb-1">Conteúdos</p>
-                      <p class="mb-0"><%=quantidadeConteudos[i]%></p>
+<section id="portfolio" class="portfolio vh-100" style="background-color: #b56e56;"> 
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <table class="section-header" style="color:#fffcf7">
+        <tr>
+          <th><p style="color:#fffcf7">Usuários</p></th>
+        </tr>
+
+        <% if (Usuarios.length > 0) { %>
+          <% for(let i = 0; i < Usuarios.length; i++) { 
+               let usuario = Usuarios[i]; %>
+            <tr>
+              <td>
+                <div class="col col-md-9 col-lg-7 col-xl-5">
+                  <div class="card" style="border-radius: 15px;">
+                    <div class="card-body p-4">
+                      <div class="d-flex text-black">
+                        <div class="flex-shrink-0">
+                          <img src="assets/fotos/<%= usuario.foto %>"
+                               alt="Foto de <%= usuario.nome1 %>" 
+                               class="img-fluid" 
+                               style="width: 180px; border-radius: 10px; height: 270px; object-fit: cover;">
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                          <p class="mb-2 pb-1" style="color: #2b2a2a;"><%= usuario.nome1 %> <%= usuario.nome2 %></p>
+                          <h5 class="mb-1"><%= usuario.profissao %></h5>
+                          <div class="d-flex justify-content-start rounded-3 p-2 mb-2" style="background-color: #efefef;">
+                            <div>
+                              <p class="small text-muted mb-1">Conteúdos</p>
+                              <p class="mb-0"><%= quantidadeConteudos[i] %></p>
+                            </div>
+                          </div>
+                          <div class="d-flex pt-1">
+                            <a href="/perfil/<%= usuario._id %>">
+                              <button type="button" class="btn btn-outline-primary me-1 flex-grow-1">
+                                Perfil
+                              </button>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div class="d-flex pt-1">
-                    <a href="/perfil/<%=usuario._id%>"><button type="button" 
-                      class="btn btn-outline-primary me-1 flex-grow-1" >
-                      Perfil
-                    </button>
-                    </a>
-                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </td>
+            </tr>
+          <% } %>
+        <% } else { %>
+          <tr>
+            <td><p>Nenhum usuário encontrado.</p></td>
+          </tr>
+        <% } %>
+      </table>
     </div>
-    <br>
-     </td>  
-   </tr>
-    <% } %>
-</table>
-  </section>
+  </div>
+</section>
 
 <%- include('rodape') -%>

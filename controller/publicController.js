@@ -90,9 +90,25 @@ async function perfilunico(req, res) {
 
 // Abrir lista de usuários
 async function abrirlistar(req, res) {
-    const admin = req.user ? await Usuario.findById(req.user.id) : null;
-    const usuarios = await Usuario.find();
-    res.render('listar', { Usuarios: usuarios, Admin: admin });
+  const nomeUsuario = req.query.nome1 || '';
+  const admin = req.user ? await Usuario.findById(req.user.id) : null;
+
+  const query = nomeUsuario ? { nome1: nomeUsuario } : {};
+  const usuarios = await Usuario.find(query).exec();
+
+  const quantidadeConteudos = usuarios.map(usuario => {
+    if (usuario.disciplina && usuario.disciplina.material) {
+      return usuario.disciplina.material.length;
+    } else {
+      return 0;
+    }
+  });
+
+  res.render("listar", {
+    Usuarios: usuarios,
+    Admin: admin,
+    quantidadeConteudos
+  });
 }
 
 // Logout

@@ -7,12 +7,11 @@
 
   <title>Passaport to Life</title>
   <meta content="" name="description">
-
   <meta content="" name="keywords">
 
   <!-- Favicons -->
   <link href="/assets/img/mundo.png" rel="icon">
-  <link href="/assets/img/mundo.png " rel="apple-touch-icon">
+  <link href="/assets/img/mundo.png" rel="apple-touch-icon">
 
   <!-- Google Fonts -->
   <link
@@ -29,13 +28,6 @@
 
   <!-- Template Main CSS File -->
   <link href="/assets/css/style.css" rel="stylesheet">
-
-  <!-- =======================================================
-  * Template Name: FlexStart - v1.11.1
-  * Template URL: https://bootstrapmade.com/flexstart-bootstrap-startup-template/
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
 </head>
 
 <body>
@@ -46,65 +38,58 @@
 
       <a href="/" class="logo d-flex align-items-center">
         <img src="/assets/img/mundo.png" alt="">
-        <span>Passaport to life</span>
+        <span>Passaport to Life</span>
       </a>
 
       <nav id="navbar" class="navbar">
         <ul>
-          <li><a class="nav-link scrollto " href="/">Início</a></li>
-          <li><a class="nav-link scrollto " href="/descricao">Descrição</a></li>
+          <li><a class="nav-link scrollto" href="/">Início</a></li>
+          <li><a class="nav-link scrollto" href="/descricao">Descrição</a></li>
           <li><a class="nav-link scrollto" href="/conteudo">Conteúdo</a></li>
           <li><a class="nav-link scrollto" href="/desenvolvedora">Desenvolvedora</a></li>
           <li><a class="nav-link scrollto" href="/doacao">Doação</a></li>
           <li><a class="nav-link scrollto" href="/avaliar">Avaliação</a></li>
           <li><a class="nav-link scrollto" href="/listar">Usuários</a></li>
-          <% if (Admin) { %>
 
-  <a class="nav-link nav-profile d-flex align-items-center pe-0" data-bs-toggle="dropdown">
-    <img src="/assets/fotos/<%= Admin && Admin.foto ? Admin.foto : 'default.png' %>"
-      style="object-position: center; object-fit: cover;"
-      alt="Profile" class="rounded-circle">
+          <% if (!Admin) { %>
+            <li><a class="getstarted scrollto" href="/login">Login</a></li>
+          <% } else { %>
+            <!-- Usuário logado -->
+            <li class="nav-item dropdown pe-3">
+              <a class="nav-link nav-profile d-flex align-items-center pe-0" data-bs-toggle="dropdown">
+                <img src="/assets/fotos/<%= Admin.foto ? Admin.foto : 'default-profile.png' %>"
+                     style="object-position: center; object-fit: cover;"
+                     alt="Profile" class="rounded-circle">
+                <span class="d-none d-md-block dropdown-toggle ps-2">
+                  <%= Admin.nome1 %> <%= Admin.nome2 %>
+                </span>
+              </a>
 
-    <span class="d-none d-md-block dropdown-toggle ps-2">
-      <%= Admin.nome1 %> <%= Admin.nome2 %>
-    </span>
-  </a>
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+                <li class="dropdown-header">
+                  <h6><%= Admin.nome1 %> <%= Admin.nome2 %></h6>
+                  <span><%= Admin.profissao %></span>
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center" href="/perfil">
+                    <i class="bi bi-person"></i>
+                    <span>Meu Perfil</span>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a href="/logout" class="dropdown-item d-flex align-items-center">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+          <% } %>
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
 
-  <!-- Aqui embaixo continua seu dropdown normalmente -->
-  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-    <li class="dropdown-header">
-      <h6><%= Admin.nome1 %> <%= Admin.nome2 %></h6>
-      <span><%= Admin.profissao %></span>
-    </li>
-
-    <li>
-      <a class="dropdown-item d-flex align-items-center" href="/perfil">
-        <i class="bi bi-person"></i>
-        <span>My Profile</span>
-      </a>
-    </li>
-
-    <li><hr class="dropdown-divider"></li>
-
-    <li>
-      <a href="/logout" class="dropdown-item d-flex align-items-center">
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Log out</span>
-      </a>
-    </li>
-  </ul>
-
-<% } else { %>
-
-  <!-- Se NÃO estiver logado, mostra o botão login -->
-  <a class="getstarted scrollto" href="/login">Login</a>
-
-<% } %>
-
-          </ul>
-          <i class="bi bi-list mobile-nav-toggle"></i>
-        </nav><!-- .navbar -->
-      </div>
-      </div>
-    </header>
-    <!-- End Header -->
+    </div>
+  </header>
+  <!-- End Header -->

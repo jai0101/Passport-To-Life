@@ -1,66 +1,240 @@
-<div id="chat-container">
-    <% if (user) { %>
-        <ul id="messages"></ul>
-        <form id="form" action="" style="display: flex; gap: 6px; padding: 6px;">
+<%- include('cabecalho2') -%>
 
-            <!-- Campo de Apelido editável -->
-            <input 
-                id="nickname" 
-                autocomplete="off" 
-                placeholder="Seu Apelido" 
-                style="width: 120px; flex-grow: 0;" 
-                value="<%= user.username || user.nome %>"
-            />
+<!-- O chat (ou o pop-up de login) será renderizado se o template for incluído -->
 
-            <!-- Campo de Mensagem -->
-            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." style="flex: 1;" />
+<!-- Estrutura do Chat Flutuante para Usuários Logados -->
+<% if (Admin) { %>
+<!-- Ícone do chat -->
+<div id="chat-icon">💬</div>
 
-            <button type="submit">Enviar</button>
-        </form>
+<!-- Janela de chat (escondida inicialmente) -->
+<div id="chat-window" style="display: none;">
+  <!-- Área de escolha de apelido (visível inicialmente) -->
+  <div id="nickname-area">
+    <p>Escolha seu apelido para o chat:</p>
+    <input id="nickname-input" placeholder="Digite seu apelido..." value="<%= Admin.username || Admin.nome1 %>" autocomplete="off"/>
+    <button id="save-nickname-btn">Salvar Apelido</button>
+  </div>
 
-    <% } else { %>
-        <div id="login-message">
-            Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
-        </div>
-    <% } %>
+  <!-- Área de mensagens (escondida inicialmente) -->
+  <div id="messages-area" style="display: none;">
+    <ul id="messages"></ul>
+    <form id="chat-form">
+      <input id="chat-input" placeholder="Digite sua mensagem..." autocomplete="off"/>
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
-
-<% if (user) { %>
+<!-- Define variáveis globais para o chat.js -->
 <script>
-    const socket = io();
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const nicknameInput = document.getElementById('nickname');
-    const messages = document.getElementById('messages');
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const nickname = nicknameInput.value.trim();
-        const message = input.value.trim();
-
-        if (!nickname) {
-            alert("Escolha um apelido antes de enviar a mensagem!");
-            return;
-        }
-
-        if (message) {
-            socket.emit('chat message', { nickname: nickname, msg: message });
-            input.value = '';
-        }
-    });
-
-    socket.on('chat message', (data) => {
-        const item = document.createElement('li');
-        const nicknameSpan = document.createElement('span');
-        nicknameSpan.classList.add('nickname');
-        nicknameSpan.textContent = data.nickname + ': ';
-        item.appendChild(nicknameSpan);
-        item.appendChild(document.createTextNode(data.msg));
-        messages.appendChild(item);
-        messages.scrollTop = messages.scrollHeight;
-    });
+  window.initialNickname = "<%= Admin.username || Admin.nome1 %>";
+  window.loggedIn = true;
 </script>
+
+<!-- Scripts do Chat -->
+<!-- O socket.io.js deve ser carregado antes do chat.js -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/assets/js/chat.js"></script>
+
+<% } else { %>
+<!-- Estrutura do Pop-up de Login para Usuários Deslogados -->
+<div id="chat-icon-login">💬</div>
+
+<div id="login-popup" style="display: none;">
+  <div class="popup-header">
+    <span>Bem-vindo ao Chat do Passaport to Life!</span>
+    <button id="close-popup-btn">X</button>
+  </div>
+  <div class="popup-body">
+    <p>O chat em tempo real está disponível apenas para usuários logados.</p>
+    <a href="/login" class="login-button">Fazer Login</a>
+  </div>
+</div>
+
+<!-- Script para controlar o pop-up de login -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chatIconLogin = document.getElementById('chat-icon-login');
+    const loginPopup = document.getElementById('login-popup');
+    const closePopupBtn = document.getElementById('close-popup-btn');
+
+    if (chatIconLogin && loginPopup) {
+      chatIconLogin.addEventListener('click', () => {
+        // Usa 'flex' para exibir o pop-up
+        loginPopup.style.display = 'flex';
+      });
+
+      closePopupBtn.addEventListener('click', () => {
+        loginPopup.style.display = 'none';
+      });
+    }
+  });
+</script>
+
 <% } %>
+
+<!-- Estilos do Chat e Pop-up (Incorporados no EJS) -->
+<style>
+/* Estilos Comuns para Ícones */
+#chat-icon, #chat-icon-login {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: #7d3617;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Estilos para a Janela do Chat (Logado) */
+#chat-window {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  height: 400px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Estilos para o Pop-up de Login (Deslogado) */
+#login-popup {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #7d3617;
+  color: white;
+  font-weight: bold;
+}
+
+.popup-header button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.popup-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.login-button {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #7d3617;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Estilos para a área de escolha de apelido (Logado) */
+#nickname-area {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+#nickname-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 90%;
+}
+
+#save-nickname-btn {
+  padding: 8px 15px;
+  background: #7d3617;
+  color: white;
+  border: none;
+  border-radius: 5-px;
+  cursor: pointer;
+}
+
+#save-nickname-btn:hover {
+  background: #ecab96;
+}
+
+/* Estilos para a área de mensagens (Logado) */
+#messages-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+}
+
+#chat-form {
+  display: flex;
+  padding: 5px;
+  border-top: 1px solid #ccc;
+}
+
+#chat-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 5px;
+}
+
+#chat-form button {
+  padding: 5px 10px;
+  background: #7d3617;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#chat-form button:hover {
+  background: #ecab96;
+}
+</style>
+
+<%- include('rodape') -%>
