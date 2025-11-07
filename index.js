@@ -1,52 +1,63 @@
+require('dotenv').config(); // Carrega variáveis do .env
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const app = express();
 const path = require('path');
 const passport = require('passport');
 const session = require('express-session');
+const mongoose = require('mongoose');
 
-// 🔹 Ajuste os caminhos dos seus modelos
-const Usuario = require('./models/usuario'); 
-const Disciplina = require('./models/disciplina'); 
-const publicRouter = require('./routes/publicRoute'); 
+// 🔹 Modelos
+const Usuario = require('./models/usuario');
+const Disciplina = require('./models/disciplina');
+const publicRouter = require('./routes/publicRoute');
 
-// Configuração da sessão
+// 🔹 Configuração Mongoose
+mongoose.set('strictQuery', true); // ou false, dependendo do que você preferir
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('✅ Conectado ao MongoDB Atlas com sucesso'))
+.catch(err => console.error('❌ Erro ao conectar:', err));
+
+// 🔹 Express
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// 🔹 Configuração de sessão
 const sessionMiddleware = session({
-    secret: 'keyboard cat', // Troque por algo seguro em produção
+    secret: process.env.SESSION_SECRET || 'keyboard cat',
     resave: false,
     saveUninitialized: true,
 });
-
 app.use(sessionMiddleware);
 
-// Inicialização do Passport
+// Inicialização Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Middleware para disponibilizar o usuário logado em todas as views
+app.use((req, res, next) => {
+    res.locals.user = req.user || null;
+    next();
+});
 
 // Configurações do Express
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware para injetar o usuário logado em todas as views
-app.use((req, res, next) => {
-    res.locals.user = req.user || null;
-    next();
-});
-
+// Rotas
 app.use('/', publicRouter);
 
-const server = http.createServer(app);
-const io = new Server(server);
-
-// Compartilhar sessão do Express com Socket.IO
+// 🔹 Compartilhar sessão com Socket.IO
 io.engine.use(sessionMiddleware);
 
+// 🔹 Socket.IO
 io.on('connection', (socket) => {
     const session = socket.request.session;
-
-    // 🔹 Verifica se o usuário está logado
     const isAuthenticated = session && session.passport && session.passport.user;
 
     if (!isAuthenticated) {
@@ -57,12 +68,7 @@ io.on('connection', (socket) => {
 
     console.log('Usuário conectado ao chat:', socket.id);
 
-    // Recebe mensagens
-    socket.on('chat message', async (data) => {
-        // 🔹 Segurança extra: verificação de usuário logado antes de enviar a mensagem
-        const sessionNow = socket.request.session;
-        if (!sessionNow || !sessionNow.passport || !sessionNow.passport.user) return;
-
+    socket.on('chat message', (data) => {
         if (data && data.nickname && data.msg) {
             console.log(`[${data.nickname}]: ${data.msg}`);
             io.emit('chat message', data);
@@ -98,6 +104,8 @@ app.get('/listar', async (req, res) => {
     }
 });
 
-server.listen(3000, () => {
-    console.log('Servidor rodando na porta 3000');
+// 🔹 Iniciar servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
