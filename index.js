@@ -17,15 +17,15 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 app.use(passport.authenticate('session'));
 
-// Tornar a info do usuário disponível em todas as views
+app.set('view engine', 'ejs');
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 🔹 Passar o usuário logado para todas as views
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 });
-
-app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 const publicRouter = require('./routes/publicRoute');
 app.use('/', publicRouter);
@@ -46,7 +46,6 @@ io.on('connection', (socket) => {
         return;
     }
 
-    // Receber mensagem do usuário e retransmitir
     socket.on('chat message', (data) => {
         if (data && data.nickname && data.msg) {
             console.log(`[${data.nickname}]: ${data.msg}`);
@@ -59,18 +58,16 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, function () {
+server.listen(3000, () => {
     console.log('Funcionando na porta 3000');
 });
 
-// Download de fotos das disciplinas
 app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
     const caminho = path.join(__dirname, 'public', 'assets', 'fotos', req.params.arquivo);
     res.download(caminho);
 });
 
-// Listar usuários e conteúdos
-app.get('/listar', async function (req, res) {
+app.get('/listar', async (req, res) => {
     const usuarios = await Usuario.find({}).exec();
     const conteudosPorUsuario = [];
 
@@ -82,8 +79,8 @@ app.get('/listar', async function (req, res) {
     const admin = req.user ? await Usuario.findById(req.user.id) : undefined;
 
     if (admin) {
-        res.render('listar', { Usuarios: usuarios, Admin: admin, quantidadeConteudos: conteudosPorUsuario });
+        res.render("listar", { Usuarios: usuarios, Admin: admin, quantidadeConteudos: conteudosPorUsuario });
     } else {
-        res.render('listar', { Usuarios: usuarios, quantidadeConteudos: conteudosPorUsuario });
+        res.render("listar", { Usuarios: usuarios, quantidadeConteudos: conteudosPorUsuario });
     }
 });
