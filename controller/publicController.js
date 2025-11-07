@@ -37,19 +37,17 @@ async function logout(req, res) {
 }      
 
 
-async function abreperfil(req,res) {
+async function abreperfil(req, res) {
     const usuario = await Usuario.findById(req.user.id);
-  
-    const usu_disciplinas = await Disciplina.find({
-      usuario: req.user.id // Busca as disciplinas que foram adicionadas pelo usuário logado
-    });
-  
+    const usu_disciplinas = await Disciplina.find({ usuario: req.user.id });
+    console.log("USUÁRIO ABRE PERFIL:", usuario);
+
     res.render('perfil', {
-      Admin: usuario,
-      Disciplinas: usu_disciplinas
+        Admin: usuario,
+        Disciplinas: usu_disciplinas
     });
-  }
-  
+}
+
 
 
 async function abredoacao(req,res) {
