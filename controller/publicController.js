@@ -21,6 +21,14 @@ exports.abreavaliacao = (req, res) => res.render('avaliar', { Admin: getAdmin(re
 exports.mostraravaliacao = (req, res) => res.render('avaliacoes', { Admin: getAdmin(req) });
 exports.adicionarconteudo = (req, res) => res.render('addconteudo', { Admin: getAdmin(req) });
 
+// ✅ PÁGINA INDEX
+exports.abreindex = (req, res) => {
+  res.render('index', { 
+    Admin: getAdmin(req),  // já estava
+    user: getAdmin(req)    // adiciona esta linha para a view
+  });
+};
+
 // ✅ LOGOUT
 exports.logout = (req, res, next) => {
   req.logout(err => {
