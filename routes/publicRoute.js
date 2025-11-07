@@ -27,15 +27,18 @@ router.post('/login', (req, res, next) => {
     console.log("info:", info);
 
     if (err) return next(err);
-    if (!user) return res.send("Usuário ou senha incorretos!"); // 👈 apenas para teste
+    if (!user) return res.send("Usuário ou senha incorretos!"); 
 
     req.logIn(user, (err) => {
       if (err) return next(err);
       console.log("✅ Usuário logado com sucesso:", user.username);
-      router.get('/perfil', bloqueio, publicController.abreperfil); // 👈 teste, sem redirecionar
+
+      // Redireciona para o perfil do usuário logado
+      res.redirect('/perfil');
     });
   })(req, res, next);
 });
+
 
 // Logout
 router.get('/logout', publicController.logout);
