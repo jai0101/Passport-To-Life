@@ -49,63 +49,63 @@
 </head>
 <body>
 
-    <% if (user) { %>
-        <!-- Botão do chat -->
-        <div id="chat-icon">💬</div>
+<% if (user) { %>
+    <!-- Botão do chat -->
+    <div id="chat-icon">💬</div>
 
-        <!-- Janela do chat -->
-        <div id="chat-container">
-            <ul id="messages"></ul>
-            <form id="form">
-                <input type="hidden" id="nickname" value="<%= user.nome %>"/>
-                <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-                <button type="submit">Enviar</button>
-            </form>
-        </div>
-    <% } else { %>
-        <div id="login-message">
-            Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
-        </div>
-    <% } %>
+    <!-- Janela do chat -->
+    <div id="chat-container">
+        <ul id="messages"></ul>
+        <form id="form">
+            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+<% } else { %>
+    <div id="login-message">
+        Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
+    </div>
+<% } %>
 
-    <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 
-    <% if (user) { %>
-    <script>
-        const chatIcon = document.getElementById('chat-icon');
-        const chatContainer = document.getElementById('chat-container');
+<% if (user) { %>
+<script>
+    const chatIcon = document.getElementById('chat-icon');
+    const chatContainer = document.getElementById('chat-container');
 
-        // Mostra/oculta o chat
-        chatIcon.addEventListener('click', () => {
-            chatContainer.style.display = chatContainer.style.display === 'none' ? 'flex' : 'none';
-        });
+    chatIcon.addEventListener('click', () => {
+        chatContainer.style.display = chatContainer.style.display === 'none' ? 'flex' : 'none';
+    });
 
-        const socket = io();
-        const form = document.getElementById('form');
-        const input = document.getElementById('input');
-        const nicknameInput = document.getElementById('nickname');
-        const messages = document.getElementById('messages');
+    const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if(input.value) {
-                socket.emit('chat message', { nickname: nicknameInput.value, msg: input.value });
-                input.value = '';
-            }
-        });
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (input.value.trim()) {
+            socket.emit('chat message', { msg: input.value });
+            input.value = '';
+        }
+    });
 
-        socket.on('chat message', (data) => {
-            const item = document.createElement('li');
-            const nickSpan = document.createElement('span');
-            nickSpan.classList.add('nickname');
-            nickSpan.textContent = data.nickname + ': ';
-            item.appendChild(nickSpan);
-            item.appendChild(document.createTextNode(data.msg));
-            messages.appendChild(item);
-            messages.scrollTop = messages.scrollHeight;
-        });
-    </script>
-    <% } %>
+    socket.on('chat message', (data) => {
+        const item = document.createElement('li');
+
+        const nickSpan = document.createElement('span');
+        nickSpan.classList.add('nickname');
+        nickSpan.textContent = data.nickname + ': ';
+
+        item.appendChild(nickSpan);
+        item.appendChild(document.createTextNode(data.msg));
+
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    });
+</script>
+<% } %>
 
 </body>
 </html>
