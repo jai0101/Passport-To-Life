@@ -1,72 +1,51 @@
+
 <%- include('cabecalho2') -%>
+      <main>
+  
+        <section id="login" class="vh-100">
+            
+              <section class="vh-100">
+                <div class="container-fluid h-custom">
+                  <div class="row d-flex justify-content-center align-items-center h-100">
+                    <div class="col-md-9 col-lg-6 col-xl-5">
+                      <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
+                        class="img-fluid" alt="Sample image">
+                    </div>
+                    <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+                     
+                       
+                      <form method="POST">
+                        <!-- Email input -->
+                       
+                        <input type="username" name="username" class="form-control form-control-lg"
+                            placeholder="Enter a valid email address"
+                            class="form-label"/> 
+                            Email address<br><br>
+                      
+                        <!-- Password input -->
+                  
+                          <input type="password" name="password" class="form-control form-control-lg"
+                            placeholder="Enter password" required 
+                            class="form-label"/> Password<br><br>
+                        
+                          <button type="submit" value="Entrar" class="btn btn-primary btn-lg"
+                            style="padding-left: 2.5rem; padding-right: 2.5rem;">Login</button>
 
-<!-- ======= Hero Section ======= -->
-<section id="hero" class="hero d-flex align-items-center">
+                          </form>     
 
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-6 d-flex flex-column justify-content-center">
-        <h1 data-aos="fade-up">Educação, o passaporte para vida</h1>
-        <h2 data-aos="fade-up" data-aos-delay="400">
-          “O conceito de sistema único de educação ou mesmo o de sistema unificado de educação 
-          tem como desafio maior o horizonte da igualdade, cujo motor maior não se radica na escola, 
-          mas no próprio sistema social.” (CURY, 2008, p.3). 
-        </h2>
-        <% if (!Admin) { %>
-        <div data-aos="fade-up" data-aos-delay="600">
-          <div class="text-center text-lg-start">
-          <<form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Email" required />
-            <input type="password" name="password" placeholder="Senha" required />
-            <button type="submit">Login</button>
-          </form>
-
-          </div>
-        </div>
-        <% } %>
-      </div>
-      <div class="col-lg-6 hero-img" data-aos="zoom-out" data-aos-delay="200">
-        <div class="member-img">
-          <img src="/assets/img/logo.png" class="img-fluid social">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <style>
-    .member-img {
-      position: relative;
-      display: inline-block;
-    }
-    .member-img img {
-      display: block;
-      max-width: 100%;
-    }
-    .member-img a {
-      position: absolute;
-      top: 20px;
-      right: 10px;
-      transform: translate(-50%, 0%);
-    }
-    .member-img a i {
-      display: block;
-      color: #7d3617;
-    }
-    .member-img a:hover i {
-      color: #ecab96;
-    }
-    .whatsapp-link {
-      display: none;
-    }
-    .member-img:hover .whatsapp-link {
-      display: block;
-    }
-  </style>
-</section><!-- End Hero -->
-
-<!-- ✅ Chat: somente se estiver logado -->
-<% if (Admin) { %>
-  <%- include('chat') %>
-<% } %>
-
-<%- include('rodape') -%>
+                          <p class="small fw-bold mt-2 pt-1 mb-0">Don't have an account? <a href="/registrar"
+                            
+                              class="link-danger" >Register</a> </p>
+                              
+                           <!-- End Logo -->
+                        </div>
+                     
+                    </div>
+                  </div>
+                </div>
+              </section>
+        </section>
+            </div>
+      </main><!-- End #main -->
+    
+      <%- include('rodape') -%>
