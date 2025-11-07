@@ -19,14 +19,15 @@ router.get('/avaliacoes', publicController.mostraravaliacao);
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
 // ✅ LOGIN / LOGOUT
-router.post('/login', passport.authenticate('local', {
-    successRedirect: '/perfil',
-    failureRedirect: '/registrar',
-}));
-router.get('/logout', publicController.logout);
-
-// ✅ PERFIL DO USUÁRIO LOGADO (PROTEGIDO)
-router.get('/perfil', bloqueio, publicController.abreperfil);
+router.post("/login", 
+    passport.authenticate("local", {
+    failureRedirect: "/login", // ❗ voltou pro login, não pro registrar
+    failureFlash: false
+  }),
+  (req, res) => {
+    res.redirect("/perfil"); // ✅ se deu certo, manda pro perfil
+  }
+);
 
 // ✅ PERFIL PÚBLICO DE OUTRO USUÁRIO (por ID)
 router.get('/perfil/:id', publicController.perfilunico);
