@@ -1,67 +1,41 @@
-var passport = require('passport');
-var LocalStrategy = require('passport-local');
-const Usuario = require('../models/usuario'); // Certifique-se de que este caminho está correto
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const Usuario = require('../models/usuario');
 
 passport.use(new LocalStrategy(
-  { usernameField: 'username', passwordField: 'password' }, // 🔥 ADICIONE ISSO
-  async function verify(username, password, cb) {
+  { usernameField: 'username', passwordField: 'password' },
+  async function(username, password, done) {
     try {
-        const usuario = await Usuario.findOne({ username: username });
+      const usuario = await Usuario.findOne({ username });
+      console.log("🔍 Tentando login com email:", username);
+      console.log("🧾 Usuário encontrado no banco:", usuario);
 
-        console.log("🔍 Tentando login com email:", username);
-        console.log("🧾 Usuário encontrado no banco:", usuario);
+      if (!usuario) return done(null, false, { message: 'Usuário não encontrado!' });
+      if (usuario.password !== password) return done(null, false, { message: 'Senha incorreta!' });
 
-        if (!usuario) {
-            return cb(null, false, { message: 'Usuário não encontrado!' });
-        }
-
-        if (usuario.password !== password) { 
-            return cb(null, false, { message: 'Senha incorreta!' });
-        }
-
-        console.log('✅ Login OK');
-        return cb(null, usuario);
-
+      console.log('✅ Login OK');
+      return done(null, usuario);
     } catch (err) {
-        return cb(err);
+      return done(err);
     }
-}));
+  }
+));
 
-// 🔹 CORREÇÃO: Serializar apenas o ID do usuário
-passport.serializeUser(function (usuario, cb) {
-    process.nextTick(function () {
-        // Salva apenas o ID do usuário na sessão
-        cb(null, { id: usuario._id }); 
-    });
+// Serializa apenas o ID
+passport.serializeUser((usuario, done) => {
+  done(null, usuario._id);
 });
 
-// 🔹 CORREÇÃO: Deserializar buscando o usuário no banco de dados pelo ID
-passport.deserializeUser(async function (user, cb) {
-    try {
-        // O 'user' aqui é o objeto { id: ... } que foi serializado
-        const usuario = await Usuario.findById(user.id); 
-        
-        if (!usuario) {
-            return cb(null, false);
-        }
-        
-        // Retorna o objeto completo do usuário para ser anexado ao req.user
-        // O objeto retornado deve ser o que você quer que seja o req.user
-        return cb(null, {
-            id: usuario._id,
-            nome1: usuario.nome1,
-            nome2: usuario.nome2,
-            telephone: usuario.telephone,
-            profissao: usuario.profissao,
-            cidade: usuario.cidade,
-            username: usuario.username,
-            password: usuario.password,
-            foto: usuario.foto
-        });
-        
-    } catch (err) {
-        return cb(err);
-    }
+// Deserializa buscando o usuário
+passport.deserializeUser(async (id, done) => {
+  try {
+    const usuario = await Usuario.findById(id);
+    if (!usuario) return done(null, false);
+
+    return done(null, usuario);
+  } catch (err) {
+    return done(err);
+  }
 });
 
 module.exports = passport;

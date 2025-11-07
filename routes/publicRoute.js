@@ -5,7 +5,7 @@ const passport = require('../config/passport');
 const bloqueio = require('../config/bloqueio');
 const upload = require('../config/configMulter');
 
-// ✅ ROTAS PÚBLICAS
+// Páginas públicas
 router.get('/', publicController.abreindex);
 router.get('/descricao', publicController.abredescricao);
 router.get('/desenvolvedora', publicController.abredesenvolvedora);
@@ -18,34 +18,38 @@ router.get('/avaliar', publicController.abreavaliacao);
 router.get('/avaliacoes', publicController.mostraravaliacao);
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
-// ✅ LOGIN / LOGOUT
-router.get('/perfil', (req, res) => {
-  console.log("req.user:", req.user);
-  res.send("Teste de perfil");
+// Login
+router.post("/login", passport.authenticate("local", {
+  failureRedirect: "/login",
+  failureFlash: false
+}), (req, res) => {
+  res.redirect("/perfil");
 });
+
+// Logout
 router.get('/logout', publicController.logout);
 
-// ✅ PERFIL DO USUÁRIO LOGADO (PROTEGIDO)
+// Perfil do usuário logado (protegido)
 router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// ✅ PERFIL PÚBLICO DE OUTRO USUÁRIO (por ID)
+// Perfil público por ID
 router.get('/perfil/:id', publicController.perfilunico);
 
-// ✅ LISTA DE USUÁRIOS (PROTEGIDA PARA NÃO QUEBRAR HEADER)
+// Lista de usuários
 router.get('/listar', bloqueio, publicController.listarUsuarios);
 
-// ✅ REGISTRO
+// Registro
 router.post('/registrar', upload.single("foto"), publicController.enviaregistrar);
 
-// ✅ CONTEÚDO
+// Conteúdo
 router.get('/addconteudo', bloqueio, publicController.adicionarconteudo);
 router.post('/enviaconteudo', bloqueio, upload.single("arquivo"), publicController.enviaconteudo);
 
-// ✅ DOAÇÃO E AVALIAÇÃO
+// Doação e Avaliação
 router.post('/enviadoacao', publicController.enviadoacao);
 router.post('/enviaavaliacao', publicController.avaliar);
 
-// ✅ EDITAR / DELETAR (PROTEGIDOS)
+// Editar / Deletar
 router.get('/del/:id', bloqueio, publicController.deletar);
 router.get('/edit/:id', bloqueio, publicController.editar);
 router.post('/edit/:id', bloqueio, upload.single("foto"), publicController.enviaeditar);
