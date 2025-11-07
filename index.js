@@ -1,14 +1,17 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const app = express();
 const path = require('path');
 const passport = require('passport');
-// Importações de modelos (mantidas do seu código)
-const Usuario = require('path/to/your/models/usuario'); // Ajuste o caminho
-const Disciplina = require('path/to/your/models/disciplina'); // Ajuste o caminho
-
 const session = require('express-session');
+
+// 🔹 Ajuste os caminhos dos modelos conforme sua estrutura
+const Usuario = require('./models/usuario');
+const Disciplina = require('./models/disciplina');
+
+const app = express();
+
+// Configuração da sessão
 const sessionMiddleware = session({
     secret: 'keyboard cat',
     resave: false,
@@ -17,36 +20,43 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 app.use(passport.authenticate('session'));
+
+// Configurações do Express
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔹 Middleware para injetar o usuário logado em todas as views (essencial para o EJS)
+// 🔹 Middleware para tornar o usuário disponível em todas as views
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 });
 
-const publicRouter = require('./routes/publicRoute'); // Ajuste o caminho
+// 🔹 Rotas públicas
+const publicRouter = require('./routes/publicRoute');
 app.use('/', publicRouter);
 
+// Criar servidor HTTP e integrar Socket.IO
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Compartilhar a sessão do Express com o Socket.IO
+// Compartilhar a sessão do Express com Socket.IO
 io.engine.use(sessionMiddleware);
 
+// Socket.IO
 io.on('connection', (socket) => {
     console.log('Novo usuário conectado ao chat:', socket.id);
 
-    // 🔹 Lógica de segurança: Desconectar se o usuário não estiver autenticado
     const session = socket.request.session;
+
+    // 🔹 Bloquear usuários não logados
     if (!session || !session.passport || !session.passport.user) {
         console.log('Tentativa de conexão não autenticada. Desconectando.');
         socket.disconnect(true);
         return;
     }
 
+    // Receber mensagens do cliente
     socket.on('chat message', (data) => {
         if (data && data.nickname && data.msg) {
             console.log(`[${data.nickname}]: ${data.msg}`);
@@ -59,23 +69,23 @@ io.on('connection', (socket) => {
     });
 });
 
+// Iniciar servidor
 server.listen(3000, () => {
-    console.log('Funcionando na porta 3000');
+    console.log('Servidor rodando na porta 3000');
 });
 
-// Rotas adicionais (mantidas do seu código)
+// Rota para download de fotos
 app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
     const caminho = path.join(__dirname, 'public', 'assets', 'fotos', req.params.arquivo);
     res.download(caminho);
 });
 
+// Rota para listar usuários e quantidade de conteúdos
 app.get('/listar', async (req, res) => {
-    // Apenas para fins de demonstração, o código abaixo usa as variáveis que você definiu.
-    // Você precisará garantir que os modelos 'Usuario' e 'Disciplina' estejam corretamente importados e configurados.
     const usuarios = await Usuario.find({}).exec();
     const conteudosPorUsuario = [];
+
     for (let usuario of usuarios) {
-        // Simulação de busca de conteúdo
         const conteudos = await Disciplina.find({ usuario: usuario._id }).exec();
         conteudosPorUsuario.push(conteudos.length);
     }
