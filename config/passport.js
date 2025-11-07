@@ -3,31 +3,26 @@ var LocalStrategy = require('passport-local');
 const Usuario = require('../models/usuario'); // Certifique-se de que este caminho está correto
 
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
-    
-    try {
-        const usuario = await Usuario.findOne({
-            username: username
-        });
+  try {
+      const usuario = await Usuario.findOne({ username: username });
 
-        if (!usuario) {
-            return cb(null, false, {
-                message: 'Usuário não encontrado!'
-            });
-        }
-        
-        // 🔹 MELHORIA: Use uma função de comparação de senha segura (ex: bcrypt) em vez de comparação direta
-        if (usuario.password !== password) { 
-            return cb(null, false, {
-                message: 'Senha incorreta!'
-            });
-        }
-        
-        console.log('ok');
-        return cb(null, usuario);
+      console.log("🔍 Tentando login com email:", username);
+      console.log("🧾 Usuário encontrado no banco:", usuario);
 
-    } catch (err) {
-        return cb(err);
-    }
+      if (!usuario) {
+          return cb(null, false, { message: 'Usuário não encontrado!' });
+      }
+
+      if (usuario.password !== password) { 
+          return cb(null, false, { message: 'Senha incorreta!' });
+      }
+
+      console.log('✅ Login OK');
+      return cb(null, usuario);
+
+  } catch (err) {
+      return cb(err);
+  }
 }));
 
 // 🔹 CORREÇÃO: Serializar apenas o ID do usuário
