@@ -21,10 +21,7 @@ router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 // Login
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
-    console.log("DEBUG LOGIN");
-    console.log("err:", err);
-    console.log("user:", user);
-    console.log("info:", info);
+    console.log("DEBUG LOGIN", { err, user, info });
 
     if (err) return next(err);
     if (!user) return res.send("Usuário ou senha incorretos!");
@@ -33,11 +30,17 @@ router.post('/login', (req, res, next) => {
       if (err) return next(err);
       console.log("✅ Usuário logado com sucesso:", user.username);
 
-      // Redireciona para o perfil do usuário logado
-      return res.redirect('/perfil');
+      // 🔹 Simplesmente redireciona para a rota já existente
+      res.redirect('/perfil');
     });
   })(req, res, next);
 });
+
+// Rota fixa para perfil do usuário logado
+router.get('/perfil', bloqueio, publicController.abreperfil);
+
+// Perfil público por ID
+router.get('/perfil/:id', publicController.perfilunico);
 
 // Perfil do usuário logado (protegido)
 router.get('/perfil', bloqueio, publicController.abreperfil);
