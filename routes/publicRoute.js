@@ -1,47 +1,41 @@
-// routes/publicRoute.js
-const express = require('express');
-const passport = require('passport');
-const router = express.Router(); // 🔹 Declarar o router
+const express = require('express')
+const router = express.Router()
+const publicController = require('../controller/publicController')
+const passport = require('../config/passport')
+const bloqueio = require('../config/bloqueio')
+var upload = require ('../config/configMulter')
 
-// Rota de login
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if (err) {
-            return next(err);
-        }
-        if (!user) {
-            // Se o login falhar, redireciona para a página de registro
-            return res.redirect('/registrar'); 
-        }
-        
-        // Se o login for bem-sucedido, estabelecer a sessão
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-            // Redireciona após a sessão ser estabelecida
-            return res.redirect('/perfil');
-        });
-    })(req, res, next);
-});
 
-// Rota de registro (exemplo)
-router.get('/registrar', (req, res) => {
-    res.render('registrar'); // Ajuste o EJS conforme seu projeto
-});
+router.get('/',publicController.abreindex)
+router.get('/descricao',publicController.abredescricao)
+router.get('/desenvolvedora',publicController.abredesenvolvedora)
+router.get('/conteudo',publicController.abreconteudo)
+router.get('/login',publicController.abrelogin)
+router.get('/logout',publicController.logout)
+router.get('/perfil',publicController.abreperfil)
+router.get('/registrar',publicController.abreregistrar)
+router.post('/registrar', upload.single("foto"), publicController.enviaregistrar)
+router.get('/addconteudo',publicController.adicionarconteudo)
+router.post('/enviaconteudo', upload.single("arquivo"), publicController.enviaconteudo)
+router.get('/visualiza/:disciplina',publicController.abreDisciplina)
+router.get('/doacao',publicController.abredoacao)
+router.post('/enviadoacao', publicController.enviadoacao)
+router.get('/mensagem',publicController.mostrarmensagem)
+router.get('/avaliar',publicController.abreavaliacao)
+router.post('/enviaavaliacao', publicController.avaliar)
+router.get('/avaliacoes',publicController.mostraravaliacao)
+router.get('/del/:id',publicController.deletar)
+router.get('/edit/:id',publicController.editar)
+router.get('/perfil/:id',publicController.perfilunico)
+router.post('/edit/:id', upload.single("foto"), publicController.enviaeditar)
 
-// Rota de perfil (exemplo)
-router.get('/perfil', (req, res) => {
-    if (!req.user) {
-        return res.redirect('/login');
-    }
-    res.render('perfil', { user: req.user });
-});
+router.post('/login', passport.authenticate('local', {
+    successRedirect: '/perfil',
+    failureRedirect: '/registrar',
+}))
 
-// Página inicial ou outras rotas públicas
-router.get('/', (req, res) => {
-    res.render('index', { user: req.user }); // Ajuste o EJS conforme seu projeto
-});
+router.get('/', bloqueio, publicController.abreindex)
 
-// 🔹 Exportar o router
-module.exports = router;
+//rota para registrar
+//router.post('/registrar',conexao.single('foto'), publicController.abreregistrar)
+module.exports = router
