@@ -19,11 +19,22 @@ router.get('/avaliacoes', publicController.mostraravaliacao);
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
 // Login
-router.post("/login", passport.authenticate("local", {
-  failureRedirect: "/login",
-  failureFlash: false
-}), (req, res) => {
-  res.redirect("/perfil");
+router.post('/login', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    console.log("DEBUG LOGIN");
+    console.log("err:", err);
+    console.log("user:", user);
+    console.log("info:", info);
+
+    if (err) return next(err);
+    if (!user) return res.send("Usuário ou senha incorretos!"); // 👈 apenas para teste
+
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      console.log("✅ Usuário logado com sucesso:", user.username);
+      return res.send("Logado!"); // 👈 teste, sem redirecionar
+    });
+  })(req, res, next);
 });
 
 // Logout

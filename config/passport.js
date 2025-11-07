@@ -4,17 +4,15 @@ const Usuario = require('../models/usuario');
 
 passport.use(new LocalStrategy(
   { usernameField: 'username', passwordField: 'password' },
-  async function(username, password, done) {
+  async (username, password, done) => {
     try {
-      const usuario = await Usuario.findOne({ username });
-      console.log("🔍 Tentando login com email:", username);
-      console.log("🧾 Usuário encontrado no banco:", usuario);
+      const user = await Usuario.findOne({ username });
+      console.log("Buscando usuário:", username, "=>", user);
 
-      if (!usuario) return done(null, false, { message: 'Usuário não encontrado!' });
-      if (usuario.password !== password) return done(null, false, { message: 'Senha incorreta!' });
+      if (!user) return done(null, false, { message: 'Usuário não encontrado' });
+      if (user.password !== password) return done(null, false, { message: 'Senha incorreta' });
 
-      console.log('✅ Login OK');
-      return done(null, usuario);
+      return done(null, user);
     } catch (err) {
       return done(err);
     }

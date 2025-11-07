@@ -15,10 +15,12 @@
         <% if (!Admin) { %>
         <div data-aos="fade-up" data-aos-delay="600">
           <div class="text-center text-lg-start">
-            <a href="/login" class="btn-get-started scHomerollto d-inline-flex align-items-center justify-content-center align-self-center">
-              <span>Login</span>
-              <i class="bi bi-arrow-right"></i>
-            </a>
+          <<form method="POST" action="/login">
+            <input type="text" name="username" placeholder="Email" required />
+            <input type="password" name="password" placeholder="Senha" required />
+            <button type="submit">Login</button>
+          </form>
+
           </div>
         </div>
         <% } %>
