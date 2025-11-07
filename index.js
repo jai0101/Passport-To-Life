@@ -1,21 +1,24 @@
 const express = require('express');
-const http = require('http');
+const http = require('http' );
 const { Server } = require('socket.io');
+const app = express();
 const path = require('path');
 const passport = require('passport');
 const session = require('express-session');
 
-// 🔹 Ajuste os caminhos dos modelos conforme sua estrutura
-const Usuario = require('./models/usuario');
-const Disciplina = require('./models/disciplina');
-
-const app = express();
+// 🔹 AJUSTE OS CAMINHOS DOS SEUS MODELOS E ROTAS AQUI
+const Usuario = require('./models/usuario'); 
+const Disciplina = require('./models/disciplina'); 
+const publicRouter = require('./routes/publicRoute'); 
+// --------------------------------------------------
 
 // Configuração da sessão
 const sessionMiddleware = session({
-    secret: 'keyboard cat',
+    secret: 'keyboard cat', // Mude para uma chave secreta forte em produção
     resave: false,
     saveUninitialized: true,
+    // Em produção, use um store de sessão como connect-mongo ou connect-redis
+    // O MemoryStore (padrão) não é recomendado para produção, como seu log alertou.
 });
 
 app.use(sessionMiddleware);
@@ -26,31 +29,31 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔹 Middleware para tornar o usuário disponível em todas as views
+// 🔹 Middleware para injetar o usuário logado em todas as views (essencial para o EJS)
 app.use((req, res, next) => {
+    // req.user é definido pelo Passport.js após o login
     res.locals.user = req.user || null;
     next();
 });
 
-// 🔹 Rotas públicas
-const publicRouter = require('./routes/publicRoute');
 app.use('/', publicRouter);
 
-// Criar servidor HTTP e integrar Socket.IO
-const server = http.createServer(app);
+const server = http.createServer(app );
 const io = new Server(server);
 
-// Compartilhar a sessão do Express com Socket.IO
+// Compartilhar a sessão do Express com o Socket.IO
 io.engine.use(sessionMiddleware);
 
-// Socket.IO
 io.on('connection', (socket) => {
     console.log('Novo usuário conectado ao chat:', socket.id);
 
     const session = socket.request.session;
+    
+    // 🔹 Lógica de segurança: Desconectar se o usuário não estiver autenticado
+    // Verifica se a sessão existe E se o Passport.js armazenou um ID de usuário na sessão
+    const isAuthenticated = session && session.passport && session.passport.user;
 
-    // 🔹 Bloquear usuários não logados
-    if (!session || !session.passport || !session.passport.user) {
+    if (!isAuthenticated) {
         console.log('Tentativa de conexão não autenticada. Desconectando.');
         socket.disconnect(true);
         return;
@@ -60,6 +63,7 @@ io.on('connection', (socket) => {
     socket.on('chat message', (data) => {
         if (data && data.nickname && data.msg) {
             console.log(`[${data.nickname}]: ${data.msg}`);
+            // Envia a mensagem para todos os clientes conectados
             io.emit('chat message', data);
         }
     });
@@ -74,14 +78,14 @@ server.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
 });
 
-// Rota para download de fotos
+// Rotas adicionais (mantidas do seu código)
 app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
     const caminho = path.join(__dirname, 'public', 'assets', 'fotos', req.params.arquivo);
     res.download(caminho);
 });
 
-// Rota para listar usuários e quantidade de conteúdos
 app.get('/listar', async (req, res) => {
+    // Certifique-se de que a conexão com o banco de dados e os modelos estão funcionando
     const usuarios = await Usuario.find({}).exec();
     const conteudosPorUsuario = [];
 
