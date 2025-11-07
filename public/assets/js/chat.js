@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     // Ícone flutuante do chat
     const chatIcon = document.createElement('div');
     chatIcon.id = 'chat-icon';
@@ -11,93 +10,54 @@ document.addEventListener('DOMContentLoaded', () => {
     chatWindow.id = 'chat-window';
     chatWindow.style.display = 'none';
 
+    // A variável 'loggedIn' deve ser definida globalmente no seu template EJS/HTML
+    // Exemplo: <script>window.loggedIn = "<%= user ? 'true' : 'false' %>";</script>
+    // Se você não estiver usando EJS para injetar essa variável, este código não funcionará corretamente.
+    // Assumindo que o EJS está sendo usado para renderizar o conteúdo do chatWindow.
+    // O código abaixo é uma adaptação do seu original, que cria o HTML via JS.
     const loggedIn = window.loggedIn === 'true';
 
-    chatWindow.innerHTML = loggedIn ? `
-        <ul id="messages"></ul>
-        <form id="form">
-            <input id="nickname" autocomplete="off" placeholder="Seu Apelido" style="width: 100px; flex-grow: 0;" />
-            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
-            <button type="submit">Enviar</button>
-        </form>
-    ` : `
-        <div id="login-message" style="padding:10px; text-align:center; color:#721c24; background:#f8d7da;">
-            Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
-        </div>
-    `;
+    if (loggedIn) {
+        chatWindow.innerHTML = `
+            <ul id="messages"></ul>
+            <form id="form">
+                <input id="nickname" autocomplete="off" placeholder="Seu Apelido" style="width: 100px; flex-grow: 0;" />
+                <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." />
+                <button type="submit">Enviar</button>
+            </form>
+        `;
+    } else {
+        chatWindow.innerHTML = `
+            <div id="login-message" style="padding:10px; text-align:center; color:#721c24; background:#f8d7da;">
+                Para enviar mensagens no Chat, faça seu <a href="/login">Login</a>.
+            </div>
+        `;
+    }
     document.body.appendChild(chatWindow);
 
-    // Estilos
+    // Estilos do chat (mantidos como no seu original)
     const style = document.createElement('style');
     style.textContent = `
-        #chat-icon {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background-color: #7d3617;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            z-index: 9999;
-        }
-        #chat-window {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 9999;
-        }
-        #chat-window #messages {
-            list-style: none;
-            margin: 0;
-            padding: 10px;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
+        #chat-icon { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background-color: #7d3617; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 9999; }
+        #chat-window { position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; z-index: 9999; }
+        #chat-window #messages { list-style: none; margin: 0; padding: 10px; flex-grow: 1; overflow-y: auto; }
         #chat-window #messages li:nth-child(odd) { background: #ecab96; }
-        #chat-window #form {
-            display: flex;
-            padding: 5px;
-            background: #ecab96;
-        }
-        #chat-window #input {
-            flex-grow: 1;
-            padding: 5px 10px;
-            margin-right: 5px;
-        }
-        #chat-window button {
-            background: #007bff;
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+        #chat-window #form { display: flex; padding: 5px; background: #ecab96; }
+        #chat-window #input { flex-grow: 1; padding: 5px 10px; margin-right: 5px; }
+        #chat-window button { background: #007bff; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
         #chat-window button:hover { background: #0056b3; }
         #login-message a { color: #721c24; font-weight: bold; text-decoration: underline; }
     `;
     document.head.appendChild(style);
 
-    // Toggle chat
+    // Toggle janela do chat
     chatIcon.addEventListener('click', () => {
         chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
     });
 
+    // Socket.io se estiver logado
     if (loggedIn) {
+        // Certifique-se de que 'io' está disponível (você precisa incluir o script do socket.io no HTML)
         const socket = io();
         const form = chatWindow.querySelector('#form');
         const input = chatWindow.querySelector('#input');
@@ -106,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(input.value && nicknameInput.value){
+            if (input.value && nicknameInput.value) {
                 socket.emit('chat message', { nickname: nicknameInput.value, msg: input.value });
                 input.value = '';
             }
