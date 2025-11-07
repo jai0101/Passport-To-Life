@@ -50,7 +50,7 @@ router.get('/perfil', bloqueio, publicController.abreperfil);
 router.get('/perfil/:id', publicController.perfilunico);
 
 // Lista de usuários
-router.get('/listar', bloqueio, publicController.listarUsuarios);
+router.get('/listar', bloqueio, publicController.abrirlistar);
 
 // Registro
 router.post('/registrar', upload.single("foto"), publicController.enviaregistrar);
