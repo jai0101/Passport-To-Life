@@ -3,7 +3,7 @@ const http = require('http' );
 const { Server } = require('socket.io');
 const app = express();
 const path = require('path');
-const passport = require('passport');
+const passport = require('passport'); // Importa o Passport
 const session = require('express-session');
 
 // 🔹 AJUSTE OS CAMINHOS DOS SEUS MODELOS E ROTAS AQUI
@@ -17,12 +17,14 @@ const sessionMiddleware = session({
     secret: 'keyboard cat', // Mude para uma chave secreta forte em produção
     resave: false,
     saveUninitialized: true,
-    // Em produção, use um store de sessão como connect-mongo ou connect-redis
-    // O MemoryStore (padrão) não é recomendado para produção, como seu log alertou.
 });
 
+// 🔹 INICIALIZAÇÃO DO PASSPORT
+// Certifique-se de que o Passport está configurado (com o arquivo que corrigimos)
+// e que estas linhas estão ANTES das rotas.
 app.use(sessionMiddleware);
-app.use(passport.authenticate('session'));
+app.use(passport.initialize()); // Inicializa o Passport
+app.use(passport.session());    // Habilita a sessão do Passport
 
 // Configurações do Express
 app.set('view engine', 'ejs');
@@ -31,7 +33,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 🔹 Middleware para injetar o usuário logado em todas as views (essencial para o EJS)
 app.use((req, res, next) => {
-    // req.user é definido pelo Passport.js após o login
+    // req.user é definido pelo Passport.js após o deserializeUser
     res.locals.user = req.user || null;
     next();
 });
@@ -85,7 +87,7 @@ app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
 });
 
 app.get('/listar', async (req, res) => {
-    // Certifique-se de que a conexão com o banco de dados e os modelos estão funcionando
+    // req.user é o objeto de usuário completo retornado pelo deserializeUser
     const usuarios = await Usuario.find({}).exec();
     const conteudosPorUsuario = [];
 
