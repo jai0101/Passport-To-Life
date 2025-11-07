@@ -58,52 +58,49 @@
           <li><a class="nav-link scrollto" href="/doacao">Doação</a></li>
           <li><a class="nav-link scrollto" href="/avaliar">Avaliação</a></li>
           <li><a class="nav-link scrollto" href="/listar">Usuários</a></li>
-          <%if(typeof Admin == "undefined"){%>
-          <li><a class="getstarted scrollto" href="/login" class="link-danger">Login</a></p>
-          </li>
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
-          <title>Meu Perfil</title>
-          <%}%>
-            <%if(typeof Admin !== "undefined"){%>
-          <ul class="header-nav ms-auto">
-            <br class="d-flex align-items-center">
+          <% if (Admin) { %>
 
-            <lre3333i class="nav-item dropdown pe-3">
+  <a class="nav-link nav-profile d-flex align-items-center pe-0" data-bs-toggle="dropdown">
+    <img src="/assets/fotos/<%= Admin && Admin.foto ? Admin.foto : 'default.png' %>"
+      style="object-position: center; object-fit: cover;"
+      alt="Profile" class="rounded-circle">
 
-              <a class="nav-link nav-profile d-flex align-items-center pe-0" data-bs-toggle="dropdown">
-                <img src="/assets/fotos/<%=Admin.foto%>" style=
-                   "object-position: center; 
-                   object-fit: cover; "
-                   alt="Profile" class="rounded-circle">
-                <span class="d-none d-md-block dropdown-toggle ps-2"><%=Admin.nome1%> <%=Admin.nome2%></span>
-              </a><!-- End Profile Iamge Icon -->
+    <span class="d-none d-md-block dropdown-toggle ps-2">
+      <%= Admin.nome1 %> <%= Admin.nome2 %>
+    </span>
+  </a>
 
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-                <li class="dropdown-header">
-                  <h6><%=Admin.nome1%> <%=Admin.nome2%></h6>
-                  <span><%=Admin.profissao%></span>
-                </li>
-                <li>
-                  <a class="dropdown-item d-flex align-items-center" href="/perfil">
-                    <i class="bi bi-person"></i>
-                    <span>My Profile</span>
-                  </a>
-                </li>
+  <!-- Aqui embaixo continua seu dropdown normalmente -->
+  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+    <li class="dropdown-header">
+      <h6><%= Admin.nome1 %> <%= Admin.nome2 %></h6>
+      <span><%= Admin.profissao %></span>
+    </li>
 
-                <li>
-                  <hr class="dropdown-divider">
-                </li>
-                <li>
-                  <a href="../../logout" class="dropdown-item d-flex align-items-center" >
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Log out</span>
-                  </a>
-                </li>
-              </ul>
-              </li>
+    <li>
+      <a class="dropdown-item d-flex align-items-center" href="/perfil">
+        <i class="bi bi-person"></i>
+        <span>My Profile</span>
+      </a>
+    </li>
 
-          </ul>
-          <%}%> 
+    <li><hr class="dropdown-divider"></li>
+
+    <li>
+      <a href="/logout" class="dropdown-item d-flex align-items-center">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Log out</span>
+      </a>
+    </li>
+  </ul>
+
+<% } else { %>
+
+  <!-- Se NÃO estiver logado, mostra o botão login -->
+  <a class="getstarted scrollto" href="/login">Login</a>
+
+<% } %>
+
           </ul>
           <i class="bi bi-list mobile-nav-toggle"></i>
         </nav><!-- .navbar -->
