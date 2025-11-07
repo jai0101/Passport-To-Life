@@ -21,13 +21,17 @@ router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 // ✅ LOGIN / LOGOUT
 router.post("/login", 
     passport.authenticate("local", {
-    failureRedirect: "/login", // ❗ voltou pro login, não pro registrar
-    failureFlash: false
-  }),
-  (req, res) => {
-    res.redirect("/perfil"); // ✅ se deu certo, manda pro perfil
-  }
+        failureRedirect: "/login",
+        failureFlash: false
+    }),
+    (req, res) => {
+        res.redirect("/perfil"); // ✅ se deu certo, manda pro perfil
+    }
 );
+router.get('/logout', publicController.logout);
+
+// ✅ PERFIL DO USUÁRIO LOGADO (PROTEGIDO)
+router.get('/perfil', bloqueio, publicController.abreperfil);
 
 // ✅ PERFIL PÚBLICO DE OUTRO USUÁRIO (por ID)
 router.get('/perfil/:id', publicController.perfilunico);
