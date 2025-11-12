@@ -1,112 +1,143 @@
-require('dotenv').config(); // Carrega variáveis do .env
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const passport = require('passport');
 const session = require('express-session');
 const mongoose = require('mongoose');
+const passport = require('passport');
 
-// 🔹 Modelos
-const Usuario = require('./models/usuario');
-const Disciplina = require('./models/disciplina');
+// ==========================
+// Passport strategies
+// ==========================
+require('./config/passport');       // Local strategy
+require('./config/passportGoogle'); // Google OAuth
+
+// ==========================
+// Rotas
+// ==========================
 const publicRouter = require('./routes/publicRoute');
 
-// 🔹 Configuração Mongoose
-mongoose.set('strictQuery', true); // ou false, dependendo do que você preferir
+// ==========================
+// Conexão MongoDB
+// ==========================
+mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true,
+    useUnifiedTopology: true
 })
 .then(() => console.log('✅ Conectado ao MongoDB Atlas com sucesso'))
 .catch(err => console.error('❌ Erro ao conectar:', err));
 
-// 🔹 Express
+// ==========================
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// 🔹 Configuração de sessão
+// ==========================
+// Sessão
+// ==========================
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'keyboard cat',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 dia
 });
+
 app.use(sessionMiddleware);
 
-// Inicialização Passport
+// ==========================
+// Passport
+// ==========================
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware para disponibilizar o usuário logado em todas as views
+// ==========================
+// Debug de sessão
+// ==========================
 app.use((req, res, next) => {
-    // O template espera a variável 'Admin'
-    res.locals.Admin = req.user || null;
+    console.log("====== SESSION DEBUG ======");
+    console.log("SessionID:", req.sessionID);
+    console.log("Passport User:", req.session.passport?.user);
+    console.log("req.user:", req.user);
+    console.log("==========================");
     next();
 });
 
-// Configurações do Express
+// ==========================
+// Middleware global para EJS
+// ==========================
+const Usuario = require('./models/usuario');
+const Material = require('./models/material');
+const Disciplina = require('./models/disciplina');
+const DisciplinaDisponivel = require('./models/disciplinasDisponiveis');
+
+app.use(async (req, res, next) => {
+    try {
+        res.locals.Admin = req.user || null;
+        res.locals.materiais = req.user 
+            ? await Material.find({ usuario: req.user._id }).populate('disciplina').lean()
+            : [];
+        res.locals.disciplinas = req.user 
+            ? await Disciplina.find().lean()
+            : [];
+        res.locals.disciplinasDisponiveis = await DisciplinaDisponivel.find().lean();
+        res.locals.mensagem = req.query.error || req.query.ok || null;
+        res.locals.oldEmail = req.query.oldEmail || '';
+    } catch (err) {
+        console.error("Erro no middleware global:", err);
+        res.locals = { 
+            Admin: null, materiais: [], disciplinas: [], disciplinasDisponiveis: [], mensagem: null, oldEmail: '' 
+        };
+    }
+    next();
+});
+
+// ==========================
+// Configurações Express
+// ==========================
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
+// ==========================
 // Rotas
-app.use('/', publicRouter);
+// ==========================
+app.use("/", publicRouter);
 
-// 🔹 Compartilhar sessão com Socket.IO
-io.engine.use(sessionMiddleware);
+// ==========================
+// Socket.io com sessão
+// ==========================
+io.engine.use((req, res, next) => sessionMiddleware(req, {}, next));
 
-// 🔹 Socket.IO
 io.on('connection', (socket) => {
     const session = socket.request.session;
-    const isAuthenticated = session && session.passport && session.passport.user;
 
-    if (!isAuthenticated) {
-        console.log('Usuário não autenticado tentou se conectar ao chat:', socket.id);
-        socket.disconnect(true);
-        return;
+    if (!session?.passport?.user) {
+        console.log('❌ Tentativa de chat sem login');
+        return socket.disconnect(true);
     }
 
-    console.log('Usuário conectado ao chat:', socket.id);
+    console.log('✅ Chat conectado:', socket.id);
 
-    socket.on('chat message', (data) => {
-        if (data && data.nickname && data.msg) {
-            console.log(`[${data.nickname}]: ${data.msg}`);
+    socket.on('chat message', data => {
+        if (data?.nickname && data?.msg) {
             io.emit('chat message', data);
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('Usuário desconectado do chat:', socket.id);
+        console.log('Usuário desconectou do chat:', socket.id);
     });
 });
 
-// Rotas adicionais
-app.get('/disciplina/:disciplina/foto/:arquivo', (req, res) => {
-    const caminho = path.join(__dirname, 'public', 'assets', 'fotos', req.params.arquivo);
-    res.download(caminho);
-});
-
-app.get('/listar', async (req, res) => {
-    const usuarios = await Usuario.find({}).exec();
-    const conteudosPorUsuario = [];
-
-    for (let usuario of usuarios) {
-        const conteudos = await Disciplina.find({ usuario: usuario._id }).exec();
-        conteudosPorUsuario.push(conteudos.length);
-    }
-
-    const admin = req.user ? await Usuario.findById(req.user.id) : undefined;
-
-    if (admin) {
-        res.render("listar", { Usuarios: usuarios, Admin: admin, quantidadeConteudos: conteudosPorUsuario });
-    } else {
-        res.render("listar", { Usuarios: usuarios, quantidadeConteudos: conteudosPorUsuario });
-    }
-});
-
-// 🔹 Iniciar servidor
+// ==========================
+// Iniciar Servidor
+// ==========================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });

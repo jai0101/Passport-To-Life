@@ -1,141 +1,101 @@
 <%- include('cabecalho2') -%>
 
-  <main>
-    <div class="container">
+<main style="margin-top: 80px;">
+  <div class="container login-container" 
+       style="min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
 
-      <!-- Section: Design Block -->
-<section class="text-center text-lg-start">
-  <style>
-    .cascading-right {
-      margin-right: -50px;
-    }
+    <!-- Imagem lateral -->
+    <img src="/assets/img/aviao.png" class="login-image"
+         style="max-width:400px; width:100%; border-radius:15px; object-fit:cover;" alt="Imagem Lateral">
 
-    @media (max-width: 991.98px) {
-      .cascading-right {
-        margin-right: 0;
-      }
-    }
-  </style>
-  <!-- Jumbotron -->
+    <!-- Card registrar -->
+    <div class="login-card"
+         style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 15px; padding: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); max-width: 400px; width: 100%;">
 
-  <div class="container py-4">
-    <div class="row g-0 align-items-center">
-      <div class="col-lg-6 mb-5 mb-lg-0">
-        <div class="card cascading-right" style="
-            background: hsla(0, 0%, 100%, 0.55);
-            backdrop-filter: blur(30px);
-            ">
-          <div class="card-body p-5 shadow-5 text-center">
-          
-            <h2 class="fw-bold mb-5" class="card-body p-5 shadow-5 text-center"
-            style="margin-bottom: 0rem!important;">Registre seu perfil:</h2>
+      <h3 class="text-center mb-4" style="color:#333;">Crie sua conta</h3>
 
-            <div class="form-outline mb-4">  <div class="d-flex justify-content-center py-4">
-              
-            </div><!-- End Logo -->
+      <% if (mensagem) { %>
+        <div class="error-msg" style="background:#ffdddd; border-left:5px solid #dc3545; padding:10px; border-radius:6px; margin-bottom:15px; color:#a00; font-weight:500;">
+          <%= mensagem %>
+        </div>
+      <% } %>
 
-            <form method="POST" enctype="multipart/form-data">
-              <!-- 2 column grid layout with text inputs for the first and last names -->
-              <div class="row">
-                <div class="col-md-6 mb-4">
-                  <div class="form-outline">
-                    <input type="name" name="nome1" id="form3Example1" class="form-control" />
-                    <label class="form-label" for="form3Example1">First name</label>
-                  </div>
-                </div>
-                <div class="col-md-6 mb-4">
-                  <div class="form-outline">
-                    <input type="name" name="nome2" id="form3Example2" class="form-control" />
-                    <label class="form-label" for="form3Example2">Last name</label>
-                  </div>
-                </div>
-              </div>
+      <!-- PREVIEW DA FOTO -->
+      <div class="text-center mb-3">
+        <img id="previewImage"
+             src="/assets/fotos/<%= usuario.foto ? usuario.foto : 'default.png' %>?v=<%= Date.now() %>"
+             style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #555;">
+      </div>
 
-              <div class="row">
-                <div class="col-md-6 mb-4">
-                  <div class="form-outline">
-                    <input type="telephone" name="telephone" id="form3Example1" class="form-control" />
-                    <label class="form-label" for="form3Example1">Telefone</label>
-                  </div>
-                </div>
-                <div class="col-md-6 mb-4">
-                  <div class="form-outline">
-                    <input type="text" name="profissao" id="form3Example2" class="form-control" />
-                    <label class="form-label" for="form3Example2">Profissão</label>
-                  </div>
-                </div>
-              </div> 
+      <!-- Formulário de registro -->
+      <form action="/registrar" method="POST" enctype="multipart/form-data">
 
-              <div class="form-outline mb-4">
-                <input type="text" name="cidade" id="form3Example3" class="form-control" />
-                <label class="form-label" for="form3Example3">Cidade</label>
-              </div>
-
-               <!-- foto input -->
-               <div class="form-outline mb-4">
-                  <input type="file" name="foto" id="form3Example3" class="form-control" />
-                  <label class="form-label" for="form3Example3">Foto de Perfil (Obrigatório)</label>
-
-            </div>
-
-
-              <!-- Email input -->
-              <div class="form-outline mb-4">
-                <input type="username" name="username" id="form3Example3" class="form-control" />
-                <label class="form-label" for="form3Example3">Email address</label>
-              </div>
-
-              <!-- Password input -->
-             
-                <input type="password" name="password" id="form3Example4" class="form-control" />
-                <label class="form-label" for="form3Example4">Password</label>
-              </div>
-
-              <!-- Checkbox -->
-              <div class="form-check d-flex justify-content-center mb-4">
-                <input class="form-check-input me-2" type="checkbox" value="" id="form2Example33" checked />
-                <label class="form-check-label" for="form2Example33">
-                  Subscribe to our newsletter
-                </label>
-              </div>
-
-              <!-- Submit button -->
-              <button type="submit" value="Registrar" class="btn btn-primary btn-block mb-4">
-                Registrar
-              </button>
-
-              <!-- Register buttons -->
-              <div class="text-center">
-                <p>or sign up with:</p>
-                <button type="button" class="btn btn-link btn-floating mx-1">
-                  <i class="fab fa-facebook-f"></i>
-                </button>
-
-                <button type="button" class="btn btn-link btn-floating mx-1">
-                  <i class="fab fa-google"></i>
-                </button>
-
-                <button type="button" class="btn btn-link btn-floating mx-1">
-                  <i class="fab fa-twitter"></i>
-                </button>
-
-                <button type="button" class="btn btn-link btn-floating mx-1">
-                  <i class="fab fa-github"></i>
-                </button>
-              </div>
-            </form>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <input type="text" name="nome1" class="form-control" placeholder="Primeiro nome"
+                   value="<%= usuario.nome1 || '' %>" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <input type="text" name="nome2" class="form-control" placeholder="Último nome"
+                   value="<%= usuario.nome2 || '' %>" required>
           </div>
         </div>
-      </div>
 
-      <div class="col-lg-6 mb-5 mb-lg-0">
-        <img src="assets/img/aviao.png" class="w-100 rounded-4 shadow-4"
-          alt="" />
-      </div>
+        <div class="mb-3">
+          <input type="text" name="telefone" class="form-control" placeholder="Telefone"
+                 value="<%= usuario.telefone || '' %>">
+        </div>
+
+        <div class="mb-3">
+          <input type="text" name="profissao" class="form-control" placeholder="Profissão"
+                 value="<%= usuario.profissao || '' %>">
+        </div>
+
+        <div class="mb-3">
+          <input type="text" name="cidade" class="form-control" placeholder="Cidade"
+                 value="<%= usuario.cidade || '' %>">
+        </div>
+
+        <!-- FOTO -->
+        <div class="mb-3">
+          <label class="form-label">Foto de Perfil (opcional)</label>
+          <input type="file" name="foto" class="form-control" accept="image/*" onchange="previewFile(this)">
+        </div>
+
+        <div class="mb-3">
+          <input type="email" name="username" class="form-control" placeholder="Email"
+                 value="<%= usuario.username || '' %>" required>
+        </div>
+
+        <div class="mb-3">
+          <input type="password" name="password" class="form-control"
+                 placeholder="Senha">
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">
+          📝 Criar conta
+        </button>
+      </form>
+
+      <p class="text-center mt-3">
+        <a href="/login">⬅ Já tem uma conta? Faça login</a>
+      </p>
+
     </div>
   </div>
-  <!-- Jumbotron -->
+</main>
 
-</section>
-<!-- Section: Design Block -->
 <%- include('rodape') -%>
+
+<script>
+  // Pré-visualização da nova foto antes do upload
+  function previewFile(input) {
+    const file = input.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      document.getElementById("previewImage").src = url;
+    }
+  }
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

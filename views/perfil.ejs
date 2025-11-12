@@ -1,121 +1,143 @@
 <%- include('cabecalho') -%>
 
+<style>
+  html, body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100% !important;
+    position: relative !important;
+  }
+</style>
+
 <body>
+<section id="portfolio" class="portfolio h-100" style="background-color: #b56e56;">
+  <div class="container py-5">
+    <div class="row d-flex justify-content-center align-items-center">
+      <div class="col col-lg-9 col-xl-7">
+        <div class="card">
 
-  <section id="portfolio" class="portfolio" class="h-100 gradient-custom-2" style="background-color: #b56e56;">
-    <div class="container py-5 h-100">
-      <div class="row d-flex justify-content-center align-items-center h-100">
-        <div class="col col-lg-9 col-xl-7">
-          <div class="card">
-            <div class="rounded-top text-white d-flex flex-row" style="background-color: #000; height:200px;">
-              <div class="ms-4 mt-5 d-flex flex-column" style="width: 150px;">
+          <% if (!Admin) { %>
+            <div class="p-5 text-center">
+              <h4>⚠ Você não está logado</h4>
+              <p>Faça login para acessar seu perfil.</p>
+              <a href="/login" class="btn btn-primary">Ir para o login</a>
+            </div>
 
-                </form>
-                <!-- Adiciona a imagem de perfil do usuário -->
+          <% } else { %>
 
-                <div class="flex-shrink-0">
-                  <img src="/assets/fotos/<%=Admin.foto%>"
-                  alt="Generic placeholder image" class=".img-fluid .img-thumbnail mt-4 mb-2" id="exifviewer-img-1" 
-                  exifid="1572404890" 
-                
-                    style="width: 140px; border-radius: 10px; height: 210.02px; object-fit: cover; z-index: 1 padding: .25rem;
-                    background-color: #fff; padding: .25rem; border: 1px solid;" >
+            <!-- HEADER PERFIL -->
+            <div class="rounded-top text-white d-flex flex-row position-relative" style="background:#000; height:200px;">
+              <div class="ms-4 mt-5 d-flex flex-column" style="width:150px; z-index:2;">
+                <img src="/assets/fotos/<%= Admin.foto || 'default.png' %>?v=<%= Date.now() %>"
+                     class="img-fluid img-thumbnail"
+                     style="width:140px; height:210px; object-fit:cover; border-radius:10px; position:relative;">
+                <div class="mt-3 d-flex gap-2 justify-content-center">
+                  <a href="/edit/<%= Admin._id %>" class="btn btn-outline-dark btn-sm">Editar</a>
+                  <a href="/del/<%= Admin._id %>" class="btn btn-outline-danger btn-sm">Excluir</a>
                 </div>
-                
-
-               <!-- <img src="assets/fotos/<%=Admin.foto%>" alt="Generic placeholder image" 
-                 id="exifviewer-img-1" 
-                exifid="1572404890" 
-                class="img-fluid"   class="img-fluid img-thumbnail mt-4 mb-2"
-                style="width: 150px; border-radius: 10px; height: 260.02px; object-fit: cover; z-index: 1 padding: .25rem;
-                background-color: #fff; padding: .25rem; border: 1px solid;" />-->
-
-                <!--<div class="flex-shrink-0">
-                <img src="/assets/fotos/<%=Admin.foto%>"
-                alt="Generic placeholder image" class="img-fluid" class=".img-fluid .img-thumbnail mt-4 mb-2" id="exifviewer-img-1" 
-                exifid="1572404890" 
-                oldsrc="/assets/fotos/<%=Admin.foto%>"
-                style="width: 150px; border-radius: 10px; height: 260.02px; object-fit: cover; z-index: 1 padding: .25rem;
-                background-color: #fff; padding: .25rem; border: 1px solid;" >
-              </div>
-            </div>-->
-
-      
-                <a href="/edit/<%=Admin._id%>" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                  style="z-index: 1;">
-                  Editar
-                </a>
-               
-                <a href="/del/<%=Admin._id%>"
-                   class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                  style="z-index: 1;">
-                  Excluir
-                </a>
               </div>
 
-              <div class="ms-3" style="margin-top: 130px;">
-                <h5><%=Admin.nome1%> <%=Admin.nome2%></h5>
-                <p><%=Admin.username%></p>
+              <div class="ms-3" style="margin-top:130px;">
+                <h5><%= Admin.nome1 || '' %> <%= Admin.nome2 || '' %></h5>
+                <p><%= Admin.username || '' %></p>
               </div>
             </div>
 
-            <div class="p-4 text-black" style=>
-              <div class="d-flex justify-content-end text-center py-1">
+            <!-- STATS -->
+            <div class="p-4 text-black">
+              <div class="d-flex justify-content-end text-center">
                 <div>
-                  <p class="mb-1 h5"><%= Disciplinas.length %></p>
-                  <p class="small text-muted mb-0">Conteúdos</p>
-                  <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                  <p class="small fw-bold mt-2 pt-1 mb-0" style="position: center;">
-                    <a href="/addconteudo"> Adicionar Conteúdo</a>
+                  <p class="mb-0 h5"><%= Array.isArray(materiais) ? materiais.length : 0 %></p>
+                  <p class="small text-muted">Materiais</p>
                 </div>
               </div>
             </div>
-            <div class="card-body p-4 text-black" class="mb-5">
+
+            <!-- DESCRIÇÃO -->
+            <div class="card-body p-4 text-black">
               <p class="lead fw-normal mb-1">Descrição</p>
-              <div class="p-4" style="background-color: #f8f9fa;">
-                <p class="font-italic mb-1"><%=Admin.cidade%></p>
-                <p class="font-italic mb-1"><%=Admin.profissao%></p>
-                <p class="font-italic mb-0"><%=Admin.telephone%></p>
+              <div class="p-3 bg-light rounded">
+                <p class="mb-1"><%= Admin.cidade || 'Sem cidade' %></p>
+                <p class="mb-1"><%= Admin.profissao || 'Sem profissão' %></p>
+                <p class="mb-0"><%= Admin.telefone || 'Sem telefone' %></p>
               </div>
             </div>
-            <div class="card-body p-4 text-black" class="mb-5">
-              <p class="lead fw-normal mb-1">Recentes</p>
-              <table style="color:#fffcf7">
-                <tr>
-                  <th>
 
-                    <!--<p class="mb-0"><a href="" class="text-muted">Show all</a></p>-->
-                  </th>
-                </tr>
-                <ul>
-                  <li>
-                    <% Disciplinas.forEach(function(disciplina) { %>
-                  <li>
-                    <br>
-                    <div class="row g-2">
-                      <div class="col mb-2">
-                        <h2><%= disciplina.conteudo%></h2>
-                        <p><%=disciplina.titulo%></p>
-                        <%if(disciplina.material.endsWith('.jpg')||disciplina.material.endsWith('.png')||
-                        disciplina.material.endsWith('.JPG')||disciplina.material.endsWith('.PNG')||
-                        disciplina.material.endsWith('.jfif')){%>
-                          <img src="/assets/fotos/<%=disciplina.material%>" style="height:100px; width:100px;
-                        object-fit:cover;">
-                          <%}else{%>
-                          <img src="/assets/img/logo.png" height="100px" width="100"
-                          object-fit="cover">
-                          <%}%>
-                          <a href="/assets/fotos/<%=disciplina.material%>" alt="image 1" class="w-100 rounded-3">Baixar
-                          material</a>
-                      </div>
-                    </div>
-                  </li>
-                  <%})%>
-                </ul>
+            <!-- FORM UPLOAD -->
+            <div class="card-body p-4 text-black">
+              <p class="lead fw-normal mb-3">Enviar novo material</p>
+              <form action="/disciplina/upload" method="POST" enctype="multipart/form-data" class="p-3 border rounded bg-light shadow-sm">
+                <div class="mb-2">
+                  <label class="form-label"><strong>Título</strong></label>
+                  <input type="text" name="titulo" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label"><strong>Descrição</strong></label>
+                  <textarea name="conteudo" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label"><strong>Disciplina</strong></label>
+                  <select name="disciplina" class="form-select" required>
+                    <option value="">Selecione...</option>
+                    <% if (disciplinasDisponiveis && disciplinasDisponiveis.length > 0) { %>
+                      <% disciplinasDisponiveis.forEach(d => { %>
+                        <option value="<%= d._id %>"><%= d.titulo %></option>
+                      <% }) %>
+                    <% } else if (disciplinas && disciplinas.length > 0) { %>
+                      <% disciplinas.forEach(d => { %>
+                        <option value="<%= d._id %>"><%= d.titulo || d.nome %></option>
+                      <% }) %>
+                    <% } else { %>
+                      <option disabled>Nenhuma disciplina cadastrada</option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label"><strong>Arquivo (PDF ou PPT)</strong></label>
+                  <input type="file" name="material" class="form-control" accept=".pdf,.ppt,.pptx" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">📤 Enviar Material</button>
+              </form>
             </div>
-            </th>
-            </tr>
-            </table>
-  </section>
 
-  <%- include('rodape') -%>
+            <!-- LISTA MATERIAIS -->
+            <div class="card-body p-4 text-black">
+              <p class="lead fw-normal mb-3">Seus Materiais</p>
+
+              <% if (!materiais || materiais.length === 0) { %>
+                <p class="text-muted">Nenhum material enviado.</p>
+              <% } else { %>
+                <% materiais.forEach(item => { %>
+                  <div class="p-3 border rounded bg-light mb-3 shadow-sm">
+                    <h5><%= item.titulo %></h5>
+                    <p class="text-muted"><%= item.conteudo %></p>
+                    <p class="small">📘 Disciplina: <%= item.disciplina?.titulo || 'Sem disciplina' %></p>
+
+                    <% const arquivo = (item.material || '').toLowerCase(); %>
+                    <% if (arquivo.endsWith('.pdf')) { %>
+                      <img src="/assets/img/pdf-icon.png" width="60">
+                    <% } else { %>
+                      <img src="/assets/img/ppt-icon.png" width="60">
+                    <% } %>
+
+                    <div class="mt-2 d-flex gap-2">
+                      <a href="/material/download/<%= item._id %>" class="btn btn-success btn-sm">Baixar</a>
+                      <a href="/assets/fotos/<%= item.material %>" target="_blank" class="btn btn-secondary btn-sm">Visualizar</a>
+                      <% if (Admin.isAdmin || (item.usuario && item.usuario.toString() === Admin._id.toString())) { %>
+                        <a href="/disciplina/delete/<%= item._id %>" class="btn btn-danger btn-sm">Excluir</a>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
+
+          <% } %> <!-- fecha else do Admin -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('rodape') -%>

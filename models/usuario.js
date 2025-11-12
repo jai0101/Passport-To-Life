@@ -1,18 +1,28 @@
+const mongoose = require('../config/conexao');
+const Schema = mongoose.Schema;
 
-const mongoose = require('../config/conexao')
-const Schema = mongoose.Schema
+const UsuarioSchema = new Schema({
+  // Dados pessoais
+  nome1: { type: String, required: true },
+  nome2: { type: String, required: true },
+  telefone: { type: String },
+  profissao: { type: String },
+  cidade: { type: String },
 
-var UsuarioSchema = new Schema({
-    nome1:{type:String},
-    nome2:{type:String},
-    telephone:{type:String},
-    profissao:{type:String},
-    cidade:{type:String},
-    username:{type:String, unique: true},
-    password:{type:String},
-    foto: {type:String},
-   
-})
+  // Login local
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: false }, // pode ser nulo para login social
+  foto: { type: String },
 
-const usuario = mongoose.model("Usuario", UsuarioSchema)
-module.exports = usuario
+  // Login social
+  googleId:   { type: String, default: null },
+  facebookId: { type: String, default: null },
+  appleId:    { type: String, default: null },
+
+  // Controle de admin
+  admin: { type: Boolean, default: false }
+}, { timestamps: true });
+
+const Usuario = mongoose.model("Usuario", UsuarioSchema);
+
+module.exports = Usuario;

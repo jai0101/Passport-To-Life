@@ -1,83 +1,220 @@
 const express = require('express');
 const router = express.Router();
-const publicController = require('../controller/publicController');
-const passport = require('../config/passport');
+const passport = require('passport');
+const multer = require('multer');
+const path = require('path');
+
+// ==========================
+// MIDDLEWARES
+// ==========================
 const bloqueio = require('../config/bloqueio');
 const upload = require('../config/configMulter');
 
-// ---------------------
-// Páginas públicas
-// ---------------------
+// ==========================
+// MODELS
+// ==========================
+const Material = require('../models/material');
+const Usuario = require('../models/usuario');
+
+// ==========================
+// CONTROLLER
+// ==========================
+const publicController = require('../controller/publicController');
+
+// ==========================
+// ROTAS PÚBLICAS (sem login)
+// ==========================
 router.get('/', publicController.abreindex);
 router.get('/descricao', publicController.abredescricao);
 router.get('/desenvolvedora', publicController.abredesenvolvedora);
 router.get('/conteudo', publicController.abreconteudo);
-router.get('/login', publicController.abrelogin);
-router.get('/registrar', publicController.abreregistrar);
 router.get('/doacao', publicController.abredoacao);
 router.get('/mensagem', publicController.mostrarmensagem);
 router.get('/avaliar', publicController.abreavaliacao);
 router.get('/avaliacoes', publicController.mostraravaliacao);
+
+// ==========================
+// VISUALIZA MATERIAIS POR DISCIPLINA (público)
+// ==========================
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
-// ---------------------
-// Login
-// ---------------------
+// 🔎 Filtro por título (público)
+router.get('/buscar', publicController.buscarMaterialPorTitulo);
+
+// ==========================
+// LOGIN
+// ==========================
+router.get('/login', (req, res) => {
+  res.render('login', {
+    mensagem: req.query.error || null,
+    ok: req.query.ok || null,
+    oldEmail: req.query.oldEmail || ""
+  });
+});
+
 router.post('/login', (req, res, next) => {
+  const usernameDigitado = req.body.username;
+
   passport.authenticate('local', (err, user, info) => {
-    console.log("DEBUG LOGIN", { err, user, info });
-
     if (err) return next(err);
-    if (!user) return res.send("Usuário ou senha incorretos!");
 
-    req.logIn(user, (err) => {
+    if (!user) {
+      const mensagem = encodeURIComponent(info?.message || "Falha no login");
+      const oldEmail = encodeURIComponent(usernameDigitado || '');
+      return res.redirect(`/login?error=${mensagem}&oldEmail=${oldEmail}`);
+    }
+
+    req.logIn(user, err => {
       if (err) return next(err);
-      console.log("✅ Usuário logado com sucesso:", user.username);
-
-      // Redireciona para o perfil do usuário logado
-      res.redirect('/perfil');
+      console.log("✅ Usuário logado:", user.username);
+      return res.redirect('/perfil');
     });
   })(req, res, next);
 });
 
-// ---------------------
-// Logout
-// ---------------------
+// ==========================
+// REGISTRAR
+// ==========================
+router.get('/registrar', publicController.abreregistrar);
+
+router.post('/registrar', upload.single('foto'), async (req, res) => {
+  try {
+    await publicController.postRegistrar(req, res);
+    return res.redirect('/login?ok=Usuário cadastrado com sucesso! 💚');
+  } catch (err) {
+    return res.redirect('/registrar?error=Erro ao cadastrar usuário');
+  }
+});
+
+// ==========================
+// LOGOUT
+// ==========================
 router.get('/logout', publicController.logout);
 
-// ---------------------
-// Perfil
-// ---------------------
-router.get('/perfil', bloqueio, publicController.abreperfil);  // Perfil do usuário logado
-router.get('/perfil/:id', publicController.perfilunico);      // Perfil público por ID
+// ==========================
+// PERFIL DO USUÁRIO LOGADO
+// ==========================
+router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// ---------------------
-// Lista de usuários
-// ---------------------
-router.get('/listar', bloqueio, publicController.abrirlistar);
+// ==========================
+// PERFIL DE OUTRO USUÁRIO (requer login)
+// ==========================
+router.get('/perfil/:id', bloqueio, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) return res.status(404).send('Usuário não encontrado');
 
-// ---------------------
-// Registro
-// ---------------------
-router.post('/registrar', upload.single("foto"), publicController.enviaregistrar);
+    const materiais = await Material.find({ usuario: usuario._id })
+      .populate('disciplina')
+      .sort({ createdAt: -1 });
 
-// ---------------------
-// Conteúdo
-// ---------------------
-router.get('/addconteudo', bloqueio, publicController.adicionarconteudo);
-router.post('/enviaconteudo', bloqueio, upload.single("arquivo"), publicController.enviaconteudo);
+    res.render('perfilunico', {
+      usuario,
+      materiais,
+      userLogado: req.user
+    });
 
-// ---------------------
-// Doação e Avaliação
-// ---------------------
-router.post('/enviadoacao', publicController.enviadoacao);
-router.post('/enviaavaliacao', publicController.avaliar);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Erro ao carregar perfil');
+  }
+});
 
-// ---------------------
-// Editar / Deletar
-// ---------------------
-router.get('/del/:id', bloqueio, publicController.deletar);
+// ==========================
+// EDITAR / ATUALIZAR USUÁRIO
+// ==========================
 router.get('/edit/:id', bloqueio, publicController.editar);
-router.post('/edit/:id', bloqueio, upload.single("foto"), publicController.enviaeditar);
+
+router.post(
+  ['/edit/:id', '/usuario/atualizar/:id'],
+  bloqueio,
+  upload.single('foto'),
+  publicController.enviaeditar
+);
+
+// ==========================
+// DELETAR USUÁRIO
+// ==========================
+router.get('/delete/:id', bloqueio, publicController.deletar);
+
+// ==========================
+// LISTAR USUÁRIOS
+// ==========================
+router.get('/listar', bloqueio, publicController.abrirlistar);
+router.get('/usuario/:id', bloqueio, publicController.verPerfilUsuario);
+
+// ==========================
+// LISTAR MATERIAIS DO LOGADO
+// ==========================
+router.get('/abrirlistar', bloqueio, async (req, res) => {
+  try {
+    const materiais = await Material.find({ usuario: req.user._id })
+      .populate('disciplina')
+      .sort({ createdAt: -1 });
+
+    res.render('listarMateriais', { materiais });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao listar materiais");
+  }
+});
+
+// ==========================
+// UPLOAD DE MATERIAL
+// ==========================
+const storageMaterial = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "public/assets/fotos/"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname))
+});
+
+const uploadMaterial = multer({
+  storage: storageMaterial,
+  fileFilter: (req, file, cb) => {
+    const tiposPermitidos = [
+      "application/pdf",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    ];
+    if (tiposPermitidos.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Apenas PDF ou arquivos de Slide (PPT/PPTX) são permitidos!"));
+  }
+});
+
+router.post(
+  '/disciplina/upload',
+  bloqueio,
+  uploadMaterial.single('material'),
+  publicController.uploadMaterial
+);
+
+// ==========================
+// DOWNLOAD DE MATERIAL
+// ==========================
+router.get('/material/download/:id', publicController.downloadMaterial);
+
+// ==========================
+// DELETE MATERIAL
+// ==========================
+router.get('/disciplina/delete/:id', bloqueio, publicController.deletarMaterial);
+
+// ==========================
+// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW)
+// ==========================
+router.get('/material/visualiza/:id', async (req, res) => {
+  try {
+    const material = await Material.findById(req.params.id).populate('usuario');
+    if (!material) return res.status(404).send("Material não encontrado");
+
+    // Gera URL completa do arquivo
+    const host = req.protocol + '://' + req.get('host');
+    const urlArquivo = host + '/assets/fotos/' + material.material;
+
+    res.render('visualiza', { material, urlArquivo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao visualizar material");
+  }
+});
 
 module.exports = router;

@@ -1,51 +1,114 @@
-
 <%- include('cabecalho2') -%>
-      <main>
-  
-        <section id="login" class="vh-100">
-            
-              <section class="vh-100">
-                <div class="container-fluid h-custom">
-                  <div class="row d-flex justify-content-center align-items-center h-100">
-                    <div class="col-md-9 col-lg-6 col-xl-5">
-                      <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
-                        class="img-fluid" alt="Sample image">
-                    </div>
-                    <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
-                     
-                       
-                      <form method="POST">
-                        <!-- Email input -->
-                       
-                        <input type="username" name="username" class="form-control form-control-lg"
-                            placeholder="Enter a valid email address"
-                            class="form-label"/> 
-                            Email address<br><br>
-                      
-                        <!-- Password input -->
-                  
-                          <input type="password" name="password" class="form-control form-control-lg"
-                            placeholder="Enter password" required 
-                            class="form-label"/> Password<br><br>
-                        
-                          <button type="submit" value="Entrar" class="btn btn-primary btn-lg"
-                            style="padding-left: 2.5rem; padding-right: 2.5rem;">Login</button>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Passport To Life</title>
 
-                          </form>     
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-                          <p class="small fw-bold mt-2 pt-1 mb-0">Don't have an account? <a href="/registrar"
-                            
-                              class="link-danger" >Register</a> </p>
-                              
-                           <!-- End Logo -->
-                        </div>
-                     
-                    </div>
-                  </div>
-                </div>
-              </section>
-        </section>
-            </div>
-      </main><!-- End #main -->
-    
-      <%- include('rodape') -%>
+  <style>
+    body { background-color: #f5ebe7; }
+    .login-container {
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; gap: 50px; flex-wrap: wrap;
+    }
+    .login-card {
+      background: #fff; border-radius: 15px; padding: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; width: 100%;
+    }
+    .login-image {
+      max-width: 400px; width: 100%; border-radius: 15px; object-fit: cover;
+    }
+    .error-msg {
+      background: #ffdddd; border-left: 5px solid #dc3545;
+      padding: 10px; border-radius: 6px; margin-bottom: 15px;
+      color: #a00; font-weight: 500; animation: shake 0.4s ease;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+    .input-error { border: 2px solid #dc3545; }
+    .input-error:focus { 
+      border-color: #dc3545; 
+      box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); 
+    }
+    .social-btn {
+      width: 50px; height: 50px; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 22px; transition: 0.2s; text-decoration: none;
+    }
+    .social-btn:hover { transform: scale(1.1); }
+    .google { background: #fff; color: #db4437; border: 2px solid #db4437; }
+    .facebook { background: #fff; color: #1877f2; border: 2px solid #1877f2; }
+    .apple { background: #fff; color: #000; border: 2px solid #000; }
+  </style>
+</head>
+
+<body>
+
+  <div class="container login-container">
+    <!-- Imagem lateral -->
+    <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp" class="login-image" alt="Login Image">
+
+    <!-- Card de login -->
+    <div class="login-card">
+      <h3 class="text-center mb-4">Login</h3>
+
+      <!-- ✅ Mensagem de sucesso (verde) -->
+      <% if (ok) { %>
+        <div style="background:#d4edda; color:#155724; padding:12px; border-radius:5px; margin-bottom:15px; font-weight:500;">
+          ✅ <%= ok %>
+        </div>
+      <% } %>
+
+      <!-- ❌ Mensagem de erro (vermelha) -->
+      <% if (mensagem) { %>
+        <div class="error-msg"><%= mensagem %></div>
+      <% } %>
+
+      <!-- Formulário de login -->
+      <form action="/login" method="POST">
+        <div class="mb-3">
+          <label for="username" class="form-label">E-mail</label>
+          <input type="text" name="username" id="username"
+                 class="form-control <%= mensagem ? 'input-error' : '' %>"
+                 placeholder="Digite seu e-mail"
+                 value="<%= oldEmail || '' %>" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Senha</label>
+          <input type="password" name="password" id="password"
+                 class="form-control <%= mensagem ? 'input-error' : '' %>"
+                 placeholder="Digite sua senha" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+      </form>
+
+      <div class="text-center my-3">ou entre com</div>
+
+      <div class="d-flex justify-content-center gap-3">
+        <a href="/auth/google" class="social-btn google"><i class="fab fa-google"></i></a>
+        <a href="/auth/facebook" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="/auth/apple" class="social-btn apple"><i class="fab fa-apple"></i></a>
+      </div>
+
+      <p class="text-center mt-3">
+        Ainda não tem conta? <a href="/registrar">Cadastre-se</a>
+      </p>
+    </div>
+  </div>
+
+  <%- include('rodape') -%>
+</body>
+</html>
