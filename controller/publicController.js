@@ -311,46 +311,45 @@ module.exports = {
   // VISUALIZA MATERIAIS POR DISCIPLINA
   // ==========================
   abreDisciplina: async (req, res) => {
-  try {
-    const nomeDisciplina = req.params.disciplina.trim().toLowerCase();
-    const busca = req.query.busca || '';
+    try {
+      const nomeDisciplina = req.params.disciplina.trim().toLowerCase();
+      const busca = req.query.busca || '';
 
-    const disciplina = await DisciplinaDisponivel.findOne({
-      titulo: { $regex: new RegExp('^' + nomeDisciplina + '$', 'i') }
-    }).lean();
+      const disciplina = await DisciplinaDisponivel.findOne({
+        titulo: { $regex: new RegExp('^' + nomeDisciplina + '$', 'i') }
+      }).lean();
 
-    if (!disciplina) {
-      return res.render('visualiza', {
-        disciplina: nomeDisciplina,
-        materiais: [],
+      if (!disciplina) {
+        return res.render('visualiza', {
+          disciplina: nomeDisciplina,
+          materiais: [],
+          busca,
+          userLogado: req.user || null,
+          baseUrl: `${req.protocol}://${req.get('host')}`
+        });
+      }
+
+      const filtro = { disciplina: disciplina._id };
+      if (busca.trim() !== '') filtro.titulo = { $regex: busca, $options: 'i' };
+
+      const materiais = await Material.find(filtro)
+        .populate('usuario')
+        .populate('disciplina')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.render('visualiza', {
+        disciplina: disciplina.titulo,
+        materiais,
         busca,
         userLogado: req.user || null,
-        baseUrl: `${req.protocol}://${req.get('host')}` // 🔥 adiciona isso
+        baseUrl: `${req.protocol}://${req.get('host')}`
       });
+    } catch (err) {
+      console.error('Erro ao abrir disciplina:', err);
+      res.redirect('/?erro=Erro ao carregar disciplina');
     }
-
-    const filtro = { disciplina: disciplina._id };
-    if (busca.trim() !== '') filtro.titulo = { $regex: busca, $options: 'i' };
-
-    const materiais = await Material.find(filtro)
-      .populate('usuario')
-      .populate('disciplina')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.render('visualiza', {
-      disciplina: disciplina.titulo,
-      materiais,
-      busca,
-      userLogado: req.user || null,
-      baseUrl: `${req.protocol}://${req.get('host')}` // 🔥 passa pra view
-    });
-
-  } catch (err) {
-    console.error('Erro ao abrir disciplina:', err);
-    res.redirect('/?erro=Erro ao carregar disciplina');
-  }
-},
+  },
 
   // ==========================
   // BUSCA GERAL POR TÍTULO DE MATERIAL

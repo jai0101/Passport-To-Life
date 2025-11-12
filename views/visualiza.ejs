@@ -3,13 +3,13 @@
 <section id="portfolio" class="portfolio" style="background-color: #fffcf7;">
   <div class="container py-5" data-aos="fade-up">
 
-    <!-- 🧠 Cabeçalho da seção -->
+    <!-- Cabeçalho da seção -->
     <div class="section-header mb-4 text-center">
       <h2 style="color:#b56e56;">Materiais de <%= disciplina %></h2>
       <p>Veja os conteúdos compartilhados por outros usuários.</p>
     </div>
 
-    <!-- 🔎 FILTRO DE BUSCA -->
+    <!-- Filtro de busca -->
     <form method="get" action="/visualiza/<%= disciplina %>" class="d-flex justify-content-center mb-5">
       <input
         type="text"
@@ -24,26 +24,29 @@
       </button>
     </form>
 
-    <!-- ⚠️ CASO NÃO TENHA RESULTADOS -->
+    <!-- Caso não tenha resultados -->
     <% if (!materiais || materiais.length === 0) { %>
       <div class="text-center mt-5">
         <h4 style="color: #b56e56;">Nenhum material encontrado para esta disciplina.</h4>
       </div>
-
     <% } else { %>
-      <!-- 🧩 GRID DE CARDS -->
+
+      <!-- Grid de cards -->
       <div class="row justify-content-center">
         <% materiais.forEach(material => { %>
           <% 
             const extensao = material.material.split('.').pop().toLowerCase();
             const extensoesImagem = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'];
             const urlArquivo = `/assets/fotos/${material.material}`;
+            const visualizarLink = (['ppt','pptx'].includes(extensao))
+              ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl + urlArquivo)}`
+              : urlArquivo;
           %>
 
           <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
             <div class="card shadow-sm h-100 border-0" style="border-radius: 15px; overflow: hidden;">
 
-              <!-- 🖼️ PRÉ-VISUALIZAÇÃO -->
+              <!-- Pré-visualização -->
               <% if (extensoesImagem.includes(extensao)) { %>
                 <img 
                   src="<%= urlArquivo %>" 
@@ -51,7 +54,6 @@
                   alt="Material de <%= material.titulo %>" 
                   style="height: 200px; object-fit: cover;"
                 >
-
               <% } else if (extensao === 'pdf') { %>
                 <iframe 
                   src="<%= urlArquivo %>#toolbar=0" 
@@ -59,15 +61,13 @@
                   style="height: 200px; border: none;"
                   title="Prévia do PDF">
                 </iframe>
-
               <% } else if (['ppt', 'pptx'].includes(extensao)) { %>
                 <iframe 
-                  src="https://view.officeapps.live.com/op/embed.aspx?src=<%= encodeURIComponent(baseUrl + urlArquivo) %>" 
+                  src="<%= visualizarLink %>" 
                   class="w-100" 
                   style="height: 200px; border: none;"
                   title="Prévia do PowerPoint">
                 </iframe>
-
               <% } else { %>
                 <div 
                   class="d-flex align-items-center justify-content-center bg-light text-muted"
@@ -78,7 +78,7 @@
                 </div>
               <% } %>
 
-              <!-- 💬 CONTEÚDO -->
+              <!-- Conteúdo -->
               <div class="card-body d-flex flex-column justify-content-between">
                 <div>
                   <h5 class="card-title" style="color:#b56e56;"><%= material.titulo %></h5>
@@ -87,12 +87,11 @@
                   </p>
                 </div>
 
-                <!-- 🔘 BOTÕES -->
+                <!-- Botões -->
                 <div class="mt-3 d-flex justify-content-between gap-2">
-                  <a href="/material/visualizar/<%= material._id %>" target="_blank" class="btn btn-sm btn-outline-success w-50">
+                  <a href="<%= visualizarLink %>" target="_blank" class="btn btn-sm btn-outline-success w-50">
                     <i class="bi bi-eye"></i> Visualizar
                   </a>
-
                   <a href="/material/download/<%= material._id %>" class="btn btn-sm btn-outline-primary w-50">
                     <i class="bi bi-download"></i> Baixar
                   </a>
