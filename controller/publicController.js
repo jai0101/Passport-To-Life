@@ -49,6 +49,79 @@ module.exports = {
   },
 
   // ==========================
+  // REGISTRAR
+  // ==========================
+  abreregistrar: (req, res) => {
+    res.render('registrar', {
+      usuario: {
+        nome1: '',
+        nome2: '',
+        username: '',
+        telefone: '',
+        profissao: '',
+        cidade: '',
+        foto: null
+      },
+      mensagem: null
+    });
+  },
+
+  postRegistrar: async (req, res) => {
+    try {
+      const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
+      let foto = req.file ? req.file.filename : null;
+
+      const usuarioExistente = await Usuario.findOne({ username });
+      if (usuarioExistente) {
+        return res.render('registrar', {
+          usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
+          mensagem: 'Usuário já cadastrado!'
+        });
+      }
+
+      if (foto && path.extname(foto).toLowerCase() === '.heic') {
+        const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+        const novoNome = foto.replace(/\.heic$/i, '.jpg');
+        const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+        await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+        fs.unlinkSync(caminhoArquivo);
+        foto = novoNome;
+      }
+
+      const hashSenha = await bcrypt.hash(password, 10);
+
+      await Usuario.create({
+        nome1,
+        nome2,
+        username,
+        password: hashSenha,
+        telefone,
+        profissao,
+        cidade,
+        foto
+      });
+
+      return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar.');
+    } catch (err) {
+      console.error(err);
+      return res.render('registrar', {
+        usuario: req.body,
+        mensagem: 'Erro ao criar conta. Tente novamente.'
+      });
+    }
+  },
+
+  // ==========================
+  // LOGOUT
+  // ==========================
+  logout: (req, res, next) => {
+    req.logout(err => {
+      if (err) return next(err);
+      res.redirect('/');
+    });
+  },
+
+  // ==========================
   // PERFIL DO USUÁRIO LOGADO
   // ==========================
   abreperfil: async (req, res) => {
@@ -60,18 +133,17 @@ module.exports = {
         .populate('disciplina')
         .sort({ createdAt: -1 })
         .lean();
-
       const disciplinas = await DisciplinaDisponivel.find().lean();
 
       res.render('perfil', {
-        Admin: usuario, // 👈 compatível com o EJS que usa "Admin"
+        Admin: usuario,
         materiais,
         disciplinasDisponiveis: disciplinas,
         ok: req.query.ok || null,
         erro: req.query.erro || null
       });
     } catch (err) {
-      console.error("💥 Erro ao carregar perfil:", err);
+      console.error("Erro ao carregar perfil:", err);
       res.status(500).send("Erro ao carregar perfil 😢");
     }
   },
@@ -91,82 +163,9 @@ module.exports = {
       return res.redirect('/listar?erro=Erro ao carregar perfil');
     }
   },
-// ==========================
-// REGISTRAR
-// ==========================
-abreregistrar: (req, res) => {
-  res.render('registrar', {
-    usuario: {
-      nome1: '',
-      nome2: '',
-      username: '',
-      telefone: '',
-      profissao: '',
-      cidade: '',
-      foto: null
-    },
-    mensagem: null
-  });
-},
-
-postRegistrar: async (req, res) => {
-  try {
-    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-    let foto = req.file ? req.file.filename : null;
-
-    const usuarioExistente = await Usuario.findOne({ username });
-    if (usuarioExistente) {
-      return res.render('registrar', {
-        usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-        mensagem: 'Usuário já cadastrado!'
-      });
-    }
-
-    if (foto && path.extname(foto).toLowerCase() === '.heic') {
-      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-      const novoNome = foto.replace(/\.heic$/i, '.jpg');
-      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-      fs.unlinkSync(caminhoArquivo);
-      foto = novoNome;
-    }
-
-    const hashSenha = await bcrypt.hash(password, 10);
-
-    await Usuario.create({
-      nome1,
-      nome2,
-      username,
-      password: hashSenha,
-      telefone,
-      profissao,
-      cidade,
-      foto
-    });
-
-    // Redirect direto do controller
-    return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar.');
-  } catch (err) {
-    console.error(err);
-    return res.render('registrar', {
-      usuario: req.body,
-      mensagem: 'Erro ao criar conta. Tente novamente.'
-    });
-  }
-},
 
   // ==========================
-  // LOGOUT
-  // ==========================
-  logout: (req, res, next) => {
-    req.logout(err => {
-      if (err) return next(err);
-      res.redirect('/');
-    });
-  },
-
-  // ==========================
-  // EDITAR PERFIL (/editar/:id)
+  // EDITAR PERFIL
   // ==========================
   editar: async (req, res) => {
     try {
@@ -210,7 +209,6 @@ postRegistrar: async (req, res) => {
           const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
           const novoNome = foto.replace(/\.heic$/i, '.jpg');
           const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
           await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
           fs.unlinkSync(caminhoArquivo);
           foto = novoNome;
@@ -226,9 +224,6 @@ postRegistrar: async (req, res) => {
     }
   },
 
-  // ==========================
-  // EXCLUIR PERFIL (/excluir/:id)
-  // ==========================
   deletar: async (req, res) => {
     try {
       const usuario = await Usuario.findById(req.params.id);
@@ -238,7 +233,6 @@ postRegistrar: async (req, res) => {
         return res.redirect('/perfil?erro=Sem permissão');
 
       await Usuario.findByIdAndDelete(req.params.id);
-
       req.logout(() => res.redirect('/?ok=Conta excluída com sucesso!'));
     } catch (err) {
       console.error(err);
@@ -246,9 +240,6 @@ postRegistrar: async (req, res) => {
     }
   },
 
-  // ==========================
-  // LISTAR USUÁRIOS
-  // ==========================
   abrirlistar: async (req, res) => {
     try {
       const usuarios = await Usuario.find().lean();
@@ -332,9 +323,6 @@ postRegistrar: async (req, res) => {
     }
   },
 
-  // ==========================
-  // VISUALIZAR MATERIAIS POR DISCIPLINA
-  // ==========================
   abreDisciplina: async (req, res) => {
     try {
       const nomeDisciplina = req.params.disciplina.trim();
@@ -376,9 +364,6 @@ postRegistrar: async (req, res) => {
     }
   },
 
-  // ==========================
-  // BUSCA GERAL
-  // ==========================
   buscarMaterialPorTitulo: async (req, res) => {
     try {
       const termo = req.query.q || "";
@@ -401,6 +386,21 @@ postRegistrar: async (req, res) => {
     } catch (err) {
       console.error("Erro ao buscar materiais:", err);
       res.status(500).send("Erro ao buscar materiais");
+    }
+  },
+
+  visualizarMaterial: async (req, res) => {
+    try {
+      const material = await Material.findById(req.params.id).populate('usuario');
+      if (!material) return res.status(404).send("Material não encontrado");
+
+      const host = req.protocol + '://' + req.get('host');
+      const urlArquivo = host + '/assets/fotos/' + material.material;
+
+      res.render('visualiza', { material, urlArquivo, userLogado: req.user || null });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Erro ao visualizar material");
     }
   }
 };

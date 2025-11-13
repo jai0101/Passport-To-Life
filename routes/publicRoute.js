@@ -46,13 +46,7 @@ router.get('/buscar', publicController.buscarMaterialPorTitulo);
 // ==========================
 // LOGIN
 // ==========================
-router.get('/login', (req, res) => {
-  res.render('login', {
-    mensagem: req.query.error || null,
-    ok: req.query.ok || null,
-    oldEmail: req.query.oldEmail || ""
-  });
-});
+router.get('/login', publicController.abrelogin);
 
 router.post('/login', (req, res, next) => {
   const usernameDigitado = req.body.username;
@@ -118,7 +112,8 @@ router.get('/abrirlistar', bloqueio, async (req, res) => {
   try {
     const materiais = await Material.find({ usuario: req.user._id })
       .populate('disciplina')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.render('listarMateriais', { materiais });
   } catch (err) {
