@@ -91,71 +91,76 @@ module.exports = {
       return res.redirect('/listar?erro=Erro ao carregar perfil');
     }
   },
+// ==========================
+// REGISTRAR
+// ==========================
+abreregistrar: (req, res) => {
+  res.render('registrar', {
+    usuario: {
+      nome1: '',
+      nome2: '',
+      username: '',
+      telefone: '',
+      profissao: '',
+      cidade: '',
+      foto: null
+    },
+    mensagem: null
+  });
+},
 
-  // ==========================
-  // REGISTRAR
-  // ==========================
-  abreregistrar: (req, res) => {
-    res.render('registrar', {
-      usuario: {
-        nome1: '',
-        nome2: '',
-        username: '',
-        telefone: '',
-        profissao: '',
-        cidade: '',
-        foto: null
-      },
-      mensagem: null
-    });
-  },
+postRegistrar: async (req, res) => {
+  try {
+    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
+    let foto = req.file ? req.file.filename : null;
 
-  postRegistrar: async (req, res) => {
-    try {
-      const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-      let foto = req.file ? req.file.filename : null;
-
-      const usuarioExistente = await Usuario.findOne({ username });
-      if (usuarioExistente) {
-        return res.render('registrar', {
-          usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-          mensagem: 'Usuário já cadastrado!'
-        });
-      }
-
-      // Converte HEIC → JPG
-      if (foto && path.extname(foto).toLowerCase() === '.heic') {
-        const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-        const novoNome = foto.replace(/\.heic$/i, '.jpg');
-        const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
-        await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-        fs.unlinkSync(caminhoArquivo);
-        foto = novoNome;
-      }
-
-      const hashSenha = await bcrypt.hash(password, 10);
-
-      await Usuario.create({
-        nome1,
-        nome2,
-        username,
-        password: hashSenha,
-        telefone,
-        profissao,
-        cidade,
-        foto
-      });
-
-      return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
-    } catch (err) {
-      console.error(err);
-      res.render('registrar', {
-        usuario: req.body,
-        mensagem: 'Erro ao criar conta. Tente novamente.'
+    // Verifica se já existe usuário com o mesmo e-mail/username
+    const usuarioExistente = await Usuario.findOne({ username });
+    if (usuarioExistente) {
+      return res.render('registrar', {
+        usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
+        mensagem: '⚠️ Usuário já cadastrado! Tente outro e-mail.'
       });
     }
-  },
+
+    // Converte HEIC → JPG automaticamente
+    if (foto && path.extname(foto).toLowerCase() === '.heic') {
+      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+      const novoNome = foto.replace(/\.heic$/i, '.jpg');
+      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+
+      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+      fs.unlinkSync(caminhoArquivo);
+      foto = novoNome;
+    }
+
+    // Criptografa a senha
+    const hashSenha = await bcrypt.hash(password, 10);
+
+    // Cria o novo usuário
+    await Usuario.create({
+      nome1,
+      nome2,
+      username,
+      password: hashSenha,
+      telefone,
+      profissao,
+      cidade,
+      foto
+    });
+
+    // ✅ Redireciona direto para o login com mensagem verde
+    return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar. 💚');
+
+  } catch (err) {
+    console.error('Erro ao registrar usuário:', err);
+    return res.render('registrar', {
+      usuario: req.body,
+      mensagem: '❌ Erro ao criar conta. Tente novamente mais tarde.'
+    });
+  }
+},
+
 
   // ==========================
   // LOGOUT
