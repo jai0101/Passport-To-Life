@@ -11,44 +11,32 @@
 
     <!-- Filtro de busca -->
     <form method="get" action="/visualiza/<%= disciplina %>" class="d-flex justify-content-center mb-5">
-      <input
-        type="text"
-        name="busca"
-        class="form-control me-2"
-        style="max-width: 350px;"
-        placeholder="Buscar por título..."
-        value="<%= busca || '' %>"
-      >
-      <button type="submit" class="btn btn-outline-dark">
-        <i class="bi bi-search"></i> Buscar
-      </button>
+      <input type="text" name="busca" class="form-control me-2" style="max-width:350px;" placeholder="Buscar por título..." value="<%= busca || '' %>">
+      <button type="submit" class="btn btn-outline-dark"><i class="bi bi-search"></i> Buscar</button>
     </form>
 
-    <!-- Nenhum material -->
     <% if (!materiais || materiais.length === 0) { %>
       <div class="text-center mt-5">
         <h4 style="color: #b56e56;">Nenhum material encontrado para esta disciplina.</h4>
       </div>
     <% } else { %>
 
-      <!-- Grid de cards -->
       <div class="row justify-content-center">
-        <% materiais.forEach(material => { %>
-          <% 
-            const extensao = material.material.split('.').pop().toLowerCase();
-            const extensoesImagem = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'];
-            const urlArquivo = `/assets/fotos/${material.material}`;
-            const isPDF = extensao === 'pdf';
-            const isPPT = ['ppt', 'pptx'].includes(extensao);
-            const isImage = extensoesImagem.includes(extensao);
-          %>
+        <% materiais.forEach(material => { 
+          const extensao = material.material.split('.').pop().toLowerCase();
+          const extensoesImagem = ['jpg','jpeg','png','webp','gif','jfif'];
+          const urlArquivo = `/assets/fotos/${material.material}`;
+          const isPDF = extensao === 'pdf';
+          const isPPT = ['ppt','pptx'].includes(extensao);
+          const isImage = extensoesImagem.includes(extensao);
+        %>
 
           <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
-            <div class="card shadow-sm h-100 border-0" style="border-radius: 15px; overflow: hidden;">
-
+            <div class="card shadow-sm h-100 border-0" style="border-radius:15px; overflow:hidden;">
+              
               <!-- Pré-visualização -->
               <% if (isImage) { %>
-                <img src="<%= urlArquivo %>" class="card-img-top" alt="Material de <%= material.titulo %>" style="height:200px; object-fit:cover;">
+                <img src="<%= urlArquivo %>" class="card-img-top" style="height:200px; object-fit:cover;">
               <% } else if (isPDF) { %>
                 <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height:200px;">
                   <i class="bi bi-file-earmark-pdf" style="font-size:2rem; margin-right:8px;"></i> PDF
@@ -81,10 +69,7 @@
                   <% } else { %>
                     <button class="btn btn-sm btn-outline-secondary w-50" disabled>Prévia indisponível</button>
                   <% } %>
-
-                  <a href="/material/download/<%= material._id %>" class="btn btn-sm btn-outline-primary w-50">
-                    <i class="bi bi-download"></i> Baixar
-                  </a>
+                  <a href="/material/download/<%= material._id %>" class="btn btn-sm btn-outline-primary w-50"><i class="bi bi-download"></i> Baixar</a>
                 </div>
 
                 <div class="mt-2">
@@ -106,14 +91,14 @@
           <% if (isPDF || isPPT || isImage) { %>
             <div class="modal fade" id="modal<%= material._id %>" tabindex="-1" aria-labelledby="modalLabel<%= material._id %>" aria-hidden="true">
               <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
+                <div class="modal-content" style="height:90vh;">
                   <div class="modal-header">
                     <h5 class="modal-title" id="modalLabel<%= material._id %>"><%= material.titulo %></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                   </div>
-                  <div class="modal-body" style="height:80vh; overflow:auto;">
+                  <div class="modal-body p-0" style="height: calc(90vh - 60px); overflow:auto;">
                     <% if (isImage) { %>
-                      <img src="<%= urlArquivo %>" class="img-fluid" alt="Material de <%= material.titulo %>">
+                      <img src="<%= urlArquivo %>" class="img-fluid w-100" style="object-fit:contain;">
                     <% } else if (isPDF) { %>
                       <iframe src="<%= urlArquivo %>#toolbar=0" style="width:100%; height:100%; border:none;"></iframe>
                     <% } else if (isPPT) { %>
