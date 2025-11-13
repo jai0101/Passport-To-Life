@@ -114,30 +114,25 @@ postRegistrar: async (req, res) => {
     const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
     let foto = req.file ? req.file.filename : null;
 
-    // Verifica se já existe usuário com o mesmo e-mail/username
     const usuarioExistente = await Usuario.findOne({ username });
     if (usuarioExistente) {
       return res.render('registrar', {
         usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-        mensagem: '⚠️ Usuário já cadastrado! Tente outro e-mail.'
+        mensagem: 'Usuário já cadastrado!'
       });
     }
 
-    // Converte HEIC → JPG automaticamente
     if (foto && path.extname(foto).toLowerCase() === '.heic') {
       const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
       const novoNome = foto.replace(/\.heic$/i, '.jpg');
       const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
       await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
       fs.unlinkSync(caminhoArquivo);
       foto = novoNome;
     }
 
-    // Criptografa a senha
     const hashSenha = await bcrypt.hash(password, 10);
 
-    // Cria o novo usuário
     await Usuario.create({
       nome1,
       nome2,
@@ -149,18 +144,16 @@ postRegistrar: async (req, res) => {
       foto
     });
 
-    // ✅ Redireciona direto para o login com mensagem verde
-    return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar. 💚');
-
+    // Redirect direto do controller
+    return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar.');
   } catch (err) {
-    console.error('Erro ao registrar usuário:', err);
+    console.error(err);
     return res.render('registrar', {
       usuario: req.body,
-      mensagem: '❌ Erro ao criar conta. Tente novamente mais tarde.'
+      mensagem: 'Erro ao criar conta. Tente novamente.'
     });
   }
 },
-
 
   // ==========================
   // LOGOUT

@@ -74,54 +74,11 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
+
 // ==========================
 // REGISTRO DE USUÁRIO
 // ==========================
-// ==========================
-// REGISTRO DE USUÁRIO
-// ==========================
-// ==========================
-// REGISTRO DE USUÁRIO
-// ==========================
-router.get('/registrar', publicController.abreregistrar);
-
-router.post('/registrar', upload.single('foto'), async (req, res) => {
-  try {
-    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-    let foto = req.file ? req.file.filename : null;
-
-    // Verifica se usuário já existe
-    const usuarioExistente = await Usuario.findOne({ username });
-    if (usuarioExistente) {
-      return res.render('registrar', {
-        usuario: { nome1, nome2, username, telefone, profissao, cidade },
-        mensagem: 'Usuário já cadastrado!'
-      });
-    }
-
-    // Converte imagem HEIC automaticamente
-    if (foto && path.extname(foto).toLowerCase() === '.heic') {
-      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-      const novoNome = foto.replace(/\.heic$/i, '.jpg');
-      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
-      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-      fs.unlinkSync(caminhoArquivo);
-      foto = novoNome;
-    }
-
-    // Registra o usuário no controller
-    await publicController.postRegistrar(req, res, false); // passa false para não enviar resposta
-
-    // ✅ Redireciona com mensagem de sucesso
-    return res.redirect('/login?ok=Usuário cadastrado com sucesso! 💚');
-
-  } catch (err) {
-    console.error("Erro no registro:", err);
-    return res.redirect('/registrar?error=Erro ao cadastrar usuário');
-  }
-});
-
+router.post('/registrar', upload.single('foto'), publicController.postRegistrar);
 
 
 // ==========================
