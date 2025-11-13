@@ -2,17 +2,17 @@
 
 <main style="margin-top: 80px;">
   <div class="container login-container" 
-    style="min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
+       style="min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
 
     <!-- Imagem lateral -->
     <img src="/assets/img/aviao.png" class="login-image"
-      style="max-width:400px; width:100%; border-radius:15px; object-fit:cover;" alt="Imagem Lateral">
+         style="max-width:400px; width:100%; border-radius:15px; object-fit:cover;" alt="Imagem Lateral">
 
-    <!-- Card registrar -->
+    <!-- Card Editar -->
     <div class="login-card"
-      style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 15px; padding: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); max-width: 400px; width: 100%;">
+         style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 15px; padding: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); max-width: 400px; width: 100%;">
 
-      <h3 class="text-center mb-4" style="color:#333;">Criar Conta</h3>
+      <h3 class="text-center mb-4" style="color:#333;">Editar Conta</h3>
 
       <% if (mensagem) { %>
         <div class="error-msg" style="background:#ffdddd; border-left:5px solid #dc3545; padding:10px; border-radius:6px; margin-bottom:15px; color:#a00; font-weight:500;">
@@ -23,62 +23,62 @@
       <!-- PREVIEW DA FOTO -->
       <div class="text-center mb-3">
         <img id="previewImage"
-          src="/assets/fotos/<%= usuario.foto || 'default.png' %>?v=<%= Date.now() %>"
-          style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #555;">
+             src="/assets/fotos/<%= usuario.foto ? usuario.foto : 'default.png' %>?v=<%= Date.now() %>"
+             style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #555;">
       </div>
 
-      <!-- Formulário de registro -->
-      <form action="/registrar" method="POST" enctype="multipart/form-data">
+      <!-- Formulário de edição -->
+      <form action="/editar/<%= usuario._id %>" method="POST" enctype="multipart/form-data">
 
         <div class="row">
           <div class="col-md-6 mb-3">
             <input type="text" name="nome1" class="form-control" placeholder="Primeiro nome"
-              value="<%= usuario.nome1 || '' %>" required>
+                   value="<%= usuario.nome1 || '' %>" required>
           </div>
           <div class="col-md-6 mb-3">
             <input type="text" name="nome2" class="form-control" placeholder="Último nome"
-              value="<%= usuario.nome2 || '' %>" required>
+                   value="<%= usuario.nome2 || '' %>" required>
           </div>
         </div>
 
         <div class="mb-3">
           <input type="text" name="telefone" class="form-control" placeholder="Telefone"
-            value="<%= usuario.telefone || '' %>">
+                 value="<%= usuario.telefone || '' %>">
         </div>
 
         <div class="mb-3">
           <input type="text" name="profissao" class="form-control" placeholder="Profissão"
-            value="<%= usuario.profissao || '' %>">
+                 value="<%= usuario.profissao || '' %>">
         </div>
 
         <div class="mb-3">
           <input type="text" name="cidade" class="form-control" placeholder="Cidade"
-            value="<%= usuario.cidade || '' %>">
+                 value="<%= usuario.cidade || '' %>">
         </div>
 
         <!-- FOTO -->
         <div class="mb-3">
-          <label class="form-label">Foto de Perfil (opcional)</label>
+          <label class="form-label">Nova Foto de Perfil (opcional)</label>
           <input type="file" name="foto" class="form-control" accept="image/*" onchange="previewFile(this)">
         </div>
 
         <div class="mb-3">
           <input type="email" name="username" class="form-control" placeholder="Email"
-            value="<%= usuario.username || '' %>" required>
+                 value="<%= usuario.username || '' %>" required>
         </div>
 
         <div class="mb-3">
           <input type="password" name="password" class="form-control"
-            placeholder="Senha">
+                 placeholder="Nova senha (deixe em branco se não quiser alterar)">
         </div>
 
         <button type="submit" class="btn btn-success w-100">
-          📝 Criar Conta
+          💾 Salvar Alterações
         </button>
       </form>
 
       <p class="text-center mt-3">
-        <a href="/login">⬅ Já tem conta? Faça login</a>
+        <a href="/perfil">⬅ Voltar ao perfil</a>
       </p>
 
     </div>

@@ -1,4 +1,3 @@
-// controller/publicController.js
 const Usuario = require('../models/usuario');
 const Material = require('../models/material');
 const DisciplinaDisponivel = require('../models/disciplinasDisponiveis');
@@ -22,7 +21,7 @@ module.exports = {
   // ==========================
   abreindex: async (req, res) => {
     try {
-      const disciplinas = await DisciplinaDisponivel.find().sort({ titulo: 1 });
+      const disciplinas = await DisciplinaDisponivel.find().sort({ titulo: 1 }).lean();
       res.render('index', { disciplinas });
     } catch (err) {
       console.error(err);
@@ -121,7 +120,7 @@ module.exports = {
         });
       }
 
-      // Converte HEIC para JPG
+      // Converte HEIC → JPG
       if (foto && path.extname(foto).toLowerCase() === '.heic') {
         const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
         const novoNome = foto.replace(/\.heic$/i, '.jpg');
@@ -179,6 +178,7 @@ module.exports = {
         return res.redirect('/perfil?erro=Sem permissão');
 
       const { nome1, nome2, telefone, profissao, cidade, username, password } = req.body;
+
       usuario.nome1 = nome1 || usuario.nome1;
       usuario.nome2 = nome2 || usuario.nome2;
       usuario.telefone = telefone || usuario.telefone;
@@ -190,14 +190,25 @@ module.exports = {
         usuario.password = await bcrypt.hash(password, 10);
       }
 
-      if (req.file) usuario.foto = req.file.filename;
+      if (req.file) {
+        let foto = req.file.filename;
+        if (path.extname(foto).toLowerCase() === '.heic') {
+          const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+          const novoNome = foto.replace(/\.heic$/i, '.jpg');
+          const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+
+          await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+          fs.unlinkSync(caminhoArquivo);
+          foto = novoNome;
+        }
+        usuario.foto = foto;
+      }
 
       await usuario.save();
-
       return res.redirect('/perfil?ok=Perfil atualizado com sucesso!');
     } catch (err) {
       console.error(err);
-      res.redirect('/perfil?erro=Erro ao atualizar');
+      res.redirect('/perfil?erro=Erro ao atualizar perfil');
     }
   },
 
@@ -210,7 +221,6 @@ module.exports = {
         return res.redirect('/perfil?erro=Sem permissão');
 
       await Usuario.findByIdAndDelete(req.params.id);
-
       return res.redirect('/listar?ok=Usuário removido com sucesso!');
     } catch (err) {
       console.error(err);
@@ -219,7 +229,7 @@ module.exports = {
   },
 
   // ==========================
-  // LISTAGEM
+  // LISTAGEM DE USUÁRIOS
   // ==========================
   abrirlistar: async (req, res) => {
     try {
@@ -230,8 +240,7 @@ module.exports = {
 
       const mapaContagens = {};
       contagens.forEach(c => {
-        if (!c._id) return;
-        mapaContagens[c._id.toString()] = c.total;
+        if (c._id) mapaContagens[c._id.toString()] = c.total;
       });
 
       const usuariosComContagem = usuarios.map(u => ({
@@ -239,19 +248,19 @@ module.exports = {
         quantidadeConteudos: mapaContagens[u._id.toString()] || 0
       }));
 
-      return res.render('listar', {
+      res.render('listar', {
         usuarios: usuariosComContagem,
         ok: req.query.ok,
         erro: req.query.erro
       });
     } catch (err) {
       console.error("Erro em abrirlistar:", err);
-      return res.redirect('/?erro=Erro ao listar usuários');
+      res.redirect('/?erro=Erro ao listar usuários');
     }
   },
 
   // ==========================
-  // MATERIAL
+  // MATERIAIS
   // ==========================
   uploadMaterial: async (req, res) => {
     try {
@@ -308,11 +317,11 @@ module.exports = {
   },
 
   // ==========================
-  // VISUALIZA MATERIAIS POR DISCIPLINA
+  // VISUALIZAR MATERIAIS POR DISCIPLINA
   // ==========================
   abreDisciplina: async (req, res) => {
     try {
-      const nomeDisciplina = req.params.disciplina.trim().toLowerCase();
+      const nomeDisciplina = req.params.disciplina.trim();
       const busca = req.query.busca || '';
 
       const disciplina = await DisciplinaDisponivel.findOne({
@@ -352,7 +361,7 @@ module.exports = {
   },
 
   // ==========================
-  // BUSCA GERAL POR TÍTULO DE MATERIAL
+  // BUSCA GERAL
   // ==========================
   buscarMaterialPorTitulo: async (req, res) => {
     try {

@@ -97,7 +97,7 @@ router.get('/logout', publicController.logout);
 router.get('/perfil', bloqueio, publicController.abreperfil);
 
 // ==========================
-// PERFIL DE OUTRO USUÁRIO (requer login)
+// PERFIL DE OUTRO USUÁRIO
 // ==========================
 router.get('/perfil/:id', bloqueio, async (req, res) => {
   try {
@@ -113,7 +113,6 @@ router.get('/perfil/:id', bloqueio, async (req, res) => {
       materiais,
       userLogado: req.user
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).send('Erro ao carregar perfil');
@@ -123,14 +122,8 @@ router.get('/perfil/:id', bloqueio, async (req, res) => {
 // ==========================
 // EDITAR / ATUALIZAR USUÁRIO
 // ==========================
-router.get('/edit/:id', bloqueio, publicController.editar);
-
-router.post(
-  ['/edit/:id', '/usuario/atualizar/:id'],
-  bloqueio,
-  upload.single('foto'),
-  publicController.enviaeditar
-);
+router.get('/editar/:id', bloqueio, publicController.editar);
+router.post('/editar/:id', bloqueio, upload.single('foto'), publicController.enviaeditar);
 
 // ==========================
 // DELETAR USUÁRIO
@@ -199,17 +192,17 @@ router.get('/material/download/:id', publicController.downloadMaterial);
 router.get('/disciplina/delete/:id', bloqueio, publicController.deletarMaterial);
 
 // ==========================
-// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW)
+// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW E SCROLL)
 // ==========================
 router.get('/material/visualiza/:id', async (req, res) => {
   try {
     const material = await Material.findById(req.params.id).populate('usuario');
     if (!material) return res.status(404).send("Material não encontrado");
 
-    // Gera URL completa do arquivo
     const host = req.protocol + '://' + req.get('host');
     const urlArquivo = host + '/assets/fotos/' + material.material;
 
+    // Renderiza view com suporte a rolagem e preview correto
     res.render('visualiza', { material, urlArquivo });
   } catch (err) {
     console.error(err);
