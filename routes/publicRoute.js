@@ -3,6 +3,8 @@ const router = express.Router();
 const passport = require('passport');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const sharp = require('sharp');
 
 // ==========================
 // MIDDLEWARES
@@ -38,7 +40,7 @@ router.get('/avaliacoes', publicController.mostraravaliacao);
 // ==========================
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
-// 🔎 Filtro por título (público)
+// 🔎 Buscar material por título (público)
 router.get('/buscar', publicController.buscarMaterialPorTitulo);
 
 // ==========================
@@ -73,15 +75,41 @@ router.post('/login', (req, res, next) => {
 });
 
 // ==========================
-// REGISTRAR
+// REGISTRO DE USUÁRIO
 // ==========================
 router.get('/registrar', publicController.abreregistrar);
 
 router.post('/registrar', upload.single('foto'), async (req, res) => {
   try {
+    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
+    let foto = req.file ? req.file.filename : null;
+
+    // Verifica se usuário já existe
+    const usuarioExistente = await Usuario.findOne({ username });
+    if (usuarioExistente) {
+      return res.render('registrar', {
+        usuario: { nome1, nome2, username, telefone, profissao, cidade },
+        mensagem: 'Usuário já cadastrado!'
+      });
+    }
+
+    // Converte imagem HEIC automaticamente
+    if (foto && path.extname(foto).toLowerCase() === '.heic') {
+      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+      const novoNome = foto.replace(/\.heic$/i, '.jpg');
+      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+
+      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+      fs.unlinkSync(caminhoArquivo);
+      foto = novoNome;
+    }
+
     await publicController.postRegistrar(req, res);
+
+    // ✅ Redireciona com mensagem de sucesso
     return res.redirect('/login?ok=Usuário cadastrado com sucesso! 💚');
   } catch (err) {
+    console.error("Erro no registro:", err);
     return res.redirect('/registrar?error=Erro ao cadastrar usuário');
   }
 });
@@ -126,9 +154,9 @@ router.get('/editar/:id', bloqueio, publicController.editar);
 router.post('/editar/:id', bloqueio, upload.single('foto'), publicController.enviaeditar);
 
 // ==========================
-// DELETAR USUÁRIO
+// EXCLUIR USUÁRIO
 // ==========================
-router.get('/delete/:id', bloqueio, publicController.deletar);
+router.get('/excluir/:id', bloqueio, publicController.deletar);
 
 // ==========================
 // LISTAR USUÁRIOS
@@ -187,12 +215,12 @@ router.post(
 router.get('/material/download/:id', publicController.downloadMaterial);
 
 // ==========================
-// DELETE MATERIAL
+// EXCLUIR MATERIAL
 // ==========================
-router.get('/disciplina/delete/:id', bloqueio, publicController.deletarMaterial);
+router.get('/excluir/material/:id', bloqueio, publicController.deletarMaterial);
 
 // ==========================
-// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW E SCROLL)
+// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW)
 // ==========================
 router.get('/material/visualiza/:id', async (req, res) => {
   try {
@@ -202,7 +230,6 @@ router.get('/material/visualiza/:id', async (req, res) => {
     const host = req.protocol + '://' + req.get('host');
     const urlArquivo = host + '/assets/fotos/' + material.material;
 
-    // Renderiza view com suporte a rolagem e preview correto
     res.render('visualiza', { material, urlArquivo, userLogado: req.user || null });
   } catch (err) {
     console.error(err);

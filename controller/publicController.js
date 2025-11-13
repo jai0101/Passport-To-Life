@@ -16,6 +16,7 @@ function podeEditarOuExcluir(user, alvoId, adminCampo = 'admin') {
 }
 
 module.exports = {
+
   // ==========================
   // PÁGINAS PÚBLICAS
   // ==========================
@@ -48,14 +49,11 @@ module.exports = {
   },
 
   // ==========================
-// PERFIL DO USUÁRIO LOGADO
-// ==========================
-
+  // PERFIL DO USUÁRIO LOGADO
+  // ==========================
   abreperfil: async (req, res) => {
     try {
-      if (!req.user) {
-        return res.redirect('/login?erro=Você precisa estar logado');
-      }
+      if (!req.user) return res.redirect('/login?erro=Você precisa estar logado');
 
       const usuario = await Usuario.findById(req.user._id).lean();
       const materiais = await Material.find({ usuario: req.user._id })
@@ -66,7 +64,7 @@ module.exports = {
       const disciplinas = await DisciplinaDisponivel.find().lean();
 
       res.render('perfil', {
-        usuario, // 👈 Corrigido: variável certa pro EJS
+        Admin: usuario, // 👈 compatível com o EJS que usa "Admin"
         materiais,
         disciplinasDisponiveis: disciplinas,
         ok: req.query.ok || null,
@@ -77,8 +75,6 @@ module.exports = {
       res.status(500).send("Erro ao carregar perfil 😢");
     }
   },
-
-
 
   verPerfilUsuario: async (req, res) => {
     try {
@@ -140,9 +136,18 @@ module.exports = {
 
       const hashSenha = await bcrypt.hash(password, 10);
 
-      await Usuario.create({ nome1, nome2, username, password: hashSenha, telefone, profissao, cidade, foto });
+      await Usuario.create({
+        nome1,
+        nome2,
+        username,
+        password: hashSenha,
+        telefone,
+        profissao,
+        cidade,
+        foto
+      });
 
-      return res.redirect('/login?ok=Usuário cadastrado com sucesso!');
+      return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
     } catch (err) {
       console.error(err);
       res.render('registrar', {
@@ -163,25 +168,29 @@ module.exports = {
   },
 
   // ==========================
-  // EDITAR / ATUALIZAR / DELETAR
+  // EDITAR PERFIL (/editar/:id)
   // ==========================
   editar: async (req, res) => {
     try {
       const usuario = await Usuario.findById(req.params.id).lean();
-      if (!usuario) return res.redirect('/listar');
-      res.render('editar', { usuario, mensagem: null });
+      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
+
+      if (!podeEditarOuExcluir(req.user, usuario._id))
+        return res.redirect('/perfil?erro=Sem permissão');
+
+      res.render('editarPerfil', { usuario, mensagem: null });
     } catch (err) {
       console.error(err);
-      res.redirect('/listar');
+      res.redirect('/perfil?erro=Erro ao carregar edição');
     }
   },
 
   enviaeditar: async (req, res) => {
     try {
       const usuario = await Usuario.findById(req.params.id);
-      if (!usuario) return res.redirect('/listar?erro=Usuário não encontrado');
+      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
 
-      if (!podeEditarOuExcluir(req.user, usuario._id)) 
+      if (!podeEditarOuExcluir(req.user, usuario._id))
         return res.redirect('/perfil?erro=Sem permissão');
 
       const { nome1, nome2, telefone, profissao, cidade, username, password } = req.body;
@@ -219,31 +228,33 @@ module.exports = {
     }
   },
 
+  // ==========================
+  // EXCLUIR PERFIL (/excluir/:id)
+  // ==========================
   deletar: async (req, res) => {
     try {
       const usuario = await Usuario.findById(req.params.id);
-      if (!usuario) return res.redirect('/listar?erro=Usuário não encontrado');
+      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
 
       if (!podeEditarOuExcluir(req.user, usuario._id))
         return res.redirect('/perfil?erro=Sem permissão');
 
       await Usuario.findByIdAndDelete(req.params.id);
-      return res.redirect('/listar?ok=Usuário removido com sucesso!');
+
+      req.logout(() => res.redirect('/?ok=Conta excluída com sucesso!'));
     } catch (err) {
       console.error(err);
-      return res.redirect('/listar?erro=Erro ao deletar usuário');
+      return res.redirect('/perfil?erro=Erro ao excluir conta');
     }
   },
 
   // ==========================
-  // LISTAGEM DE USUÁRIOS
+  // LISTAR USUÁRIOS
   // ==========================
   abrirlistar: async (req, res) => {
     try {
       const usuarios = await Usuario.find().lean();
-      const contagens = await Material.aggregate([
-        { $group: { _id: "$usuario", total: { $sum: 1 } } }
-      ]);
+      const contagens = await Material.aggregate([{ $group: { _id: "$usuario", total: { $sum: 1 } } }]);
 
       const mapaContagens = {};
       contagens.forEach(c => {
