@@ -92,8 +92,15 @@
             </div>
 
             <!-- DESCRIÇÃO -->
-            <div class="card-body p-4 text-black">
-              <p class="lead fw-normal mb-1">Descrição</p>
+          <style>
+  .descricao-titulo {
+    margin-top: 30px; /* 🔹 Ajusta a distância do topo */
+    font-weight: 600;
+  }
+</style>
+
+<div class="card-body p-4 text-black">
+  <p class="lead fw-normal mb-1 descricao-titulo">Descrição</p>
               <div class="p-3 bg-light rounded">
                 <p class="mb-1"><%= Admin.cidade || 'Sem cidade' %></p>
                 <p class="mb-1"><%= Admin.profissao || 'Sem profissão' %></p>
