@@ -48,30 +48,35 @@ module.exports = {
   },
 
   // ==========================
-  // PERFIL
-  // ==========================
-  abreperfil: async (req, res) => {
-    try {
-      if (!req.user) return res.redirect('/login?error=Você precisa estar logado');
-
-      const materiais = await Material.find({ usuario: req.user._id })
-        .populate('disciplina')
-        .lean();
-
-      const disciplinas = await DisciplinaDisponivel.find().lean();
-
-      res.render('perfil', {
-        Admin: req.user,
-        materiais,
-        disciplinasDisponiveis: disciplinas,
-        ok: req.query.ok || null,
-        erro: req.query.erro || null
-      });
-    } catch (err) {
-      console.error(err);
-      res.redirect('/?error=Erro ao abrir perfil');
+// PERFIL DO USUÁRIO LOGADO
+// ==========================
+exports.abreperfil = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect('/login?erro=Você precisa estar logado');
     }
-  },
+
+    const usuario = await Usuario.findById(req.user._id).lean();
+    const materiais = await Material.find({ usuario: req.user._id })
+      .populate('disciplina')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const disciplinas = await DisciplinaDisponivel.find().lean();
+
+    res.render('perfil', {
+      usuario, // 👈 nome certo pro EJS
+      materiais,
+      disciplinasDisponiveis: disciplinas,
+      ok: req.query.ok || null,
+      erro: req.query.erro || null
+    });
+  } catch (err) {
+    console.error("💥 Erro ao carregar perfil:", err);
+    res.status(500).send("Erro ao carregar perfil 😢");
+  }
+},
+
 
   verPerfilUsuario: async (req, res) => {
     try {
