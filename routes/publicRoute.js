@@ -203,7 +203,7 @@ router.get('/material/visualiza/:id', async (req, res) => {
     const urlArquivo = host + '/assets/fotos/' + material.material;
 
     // Renderiza view com suporte a rolagem e preview correto
-    res.render('visualiza', { material, urlArquivo });
+    res.render('visualiza', { material, urlArquivo, userLogado: req.user || null });
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao visualizar material");
