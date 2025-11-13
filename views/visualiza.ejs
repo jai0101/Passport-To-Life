@@ -3,13 +3,13 @@
 <section id="portfolio" class="portfolio" style="background-color: #fffcf7;">
   <div class="container py-5" data-aos="fade-up">
 
-    <!-- Cabeçalho -->
+    <!-- 🧠 Cabeçalho da seção -->
     <div class="section-header mb-4 text-center">
       <h2 style="color:#b56e56;">Materiais de <%= disciplina %></h2>
       <p>Veja os conteúdos compartilhados por outros usuários.</p>
     </div>
 
-    <!-- Filtro de busca -->
+    <!-- 🔎 FILTRO DE BUSCA -->
     <form method="get" action="/visualiza/<%= disciplina %>" class="d-flex justify-content-center mb-5">
       <input
         type="text"
@@ -24,56 +24,55 @@
       </button>
     </form>
 
-    <!-- Caso não tenha resultados -->
+    <!-- ⚠️ CASO NÃO TENHA RESULTADOS -->
     <% if (!materiais || materiais.length === 0) { %>
       <div class="text-center mt-5">
         <h4 style="color: #b56e56;">Nenhum material encontrado para esta disciplina.</h4>
       </div>
     <% } else { %>
 
-      <!-- Grid de cards -->
+      <!-- 🧩 GRID DE CARDS -->
       <div class="row justify-content-center">
         <% materiais.forEach(material => { %>
           <% 
             const extensao = material.material.split('.').pop().toLowerCase();
             const extensoesImagem = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'];
             const urlArquivo = `/assets/fotos/${material.material}`;
-            const pptLink = (['ppt','pptx'].includes(extensao)) 
-              ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl + urlArquivo)}`
-              : null;
-            const isPDF = extensao === 'pdf';
-            const isImage = extensoesImagem.includes(extensao);
           %>
 
           <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
             <div class="card shadow-sm h-100 border-0" style="border-radius: 15px; overflow: hidden;">
 
-              <!-- Pré-visualização -->
-              <% if (isImage) { %>
+              <!-- 🖼️ PRÉ-VISUALIZAÇÃO -->
+              <% if (extensoesImagem.includes(extensao)) { %>
                 <img 
                   src="<%= urlArquivo %>" 
                   class="card-img-top" 
                   alt="Material de <%= material.titulo %>" 
                   style="height: 200px; object-fit: cover;"
                 >
-              <% } else if (isPDF) { %>
-                <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
-                  <i class="bi bi-file-earmark-pdf" style="font-size: 2rem; margin-right: 8px;"></i>
-                  PDF
-                </div>
-              <% } else if (pptLink) { %>
-                <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
-                  <i class="bi bi-file-earmark-ppt" style="font-size: 2rem; margin-right: 8px;"></i>
-                  PowerPoint
-                </div>
+              <% } else if (extensao === 'pdf') { %>
+                <iframe 
+                  src="<%= urlArquivo %>#toolbar=0" 
+                  class="w-100" 
+                  style="height: 200px; border: none;" 
+                  title="Prévia do PDF">
+                </iframe>
+              <% } else if (['ppt', 'pptx'].includes(extensao)) { %>
+                <iframe 
+                  src="https://view.officeapps.live.com/op/embed.aspx?src=<%= encodeURIComponent(baseUrl + urlArquivo) %>" 
+                  class="w-100" 
+                  style="height: 200px; border: none;" 
+                  title="Prévia do PowerPoint">
+                </iframe>
               <% } else { %>
-                <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
+                <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px; font-size: 0.9rem;">
                   <i class="bi bi-file-earmark-text" style="font-size: 1.5rem; margin-right: 6px;"></i>
                   Prévia não disponível
                 </div>
               <% } %>
 
-              <!-- Conteúdo -->
+              <!-- 💬 CONTEÚDO -->
               <div class="card-body d-flex flex-column justify-content-between">
                 <div>
                   <h5 class="card-title" style="color:#b56e56;"><%= material.titulo %></h5>
@@ -82,26 +81,11 @@
                   </p>
                 </div>
 
-                <!-- Botões -->
+                <!-- 🔘 BOTÕES -->
                 <div class="mt-3 d-flex justify-content-between gap-2">
-                  <% if (isPDF) { %>
-                    <button type="button" class="btn btn-sm btn-outline-success w-50" data-bs-toggle="modal" data-bs-target="#modal<%= material._id %>">
-                      <i class="bi bi-eye"></i> Visualizar
-                    </button>
-                  <% } else if (pptLink) { %>
-                    <a href="<%= pptLink %>" target="_blank" class="btn btn-sm btn-outline-success w-50">
-                      <i class="bi bi-eye"></i> Visualizar
-                    </a>
-                  <% } else if (isImage) { %>
-                    <a href="<%= urlArquivo %>" target="_blank" class="btn btn-sm btn-outline-success w-50">
-                      <i class="bi bi-eye"></i> Visualizar
-                    </a>
-                  <% } else { %>
-                    <button class="btn btn-sm btn-outline-secondary w-50" disabled>
-                      Prévia indisponível
-                    </button>
-                  <% } %>
-
+                  <a href="/material/visualizar/<%= material._id %>" target="_blank" class="btn btn-sm btn-outline-success w-50">
+                    <i class="bi bi-eye"></i> Visualizar
+                  </a>
                   <a href="/material/download/<%= material._id %>" class="btn btn-sm btn-outline-primary w-50">
                     <i class="bi bi-download"></i> Baixar
                   </a>
@@ -121,23 +105,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Modal PDF -->
-          <% if (isPDF) { %>
-            <div class="modal fade" id="modal<%= material._id %>" tabindex="-1" aria-labelledby="modalLabel<%= material._id %>" aria-hidden="true">
-              <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="modalLabel<%= material._id %>"><%= material.titulo %></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                  </div>
-                  <div class="modal-body p-0" style="height: 80vh;">
-                    <iframe src="<%= urlArquivo %>#toolbar=0" style="width: 100%; height: 100%; border: none;"></iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% } %>
 
         <% }) %>
       </div>
