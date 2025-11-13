@@ -40,14 +40,13 @@ const publicController = {
   // ==========================
   // LOGIN
   // ==========================
- abrelogin: (req, res) => {
-  res.render('login', {
-    ok: req.query.ok || null,                // Mensagem verde (sucesso)
-    mensagem: req.query.error || req.query.erro || null, // Mensagem vermelha (erro)
-    oldEmail: req.query.oldEmail || ''
-  });
-},
-
+  abrelogin: (req, res) => {
+    res.render('login', {
+      ok: req.query.ok || null, // verde
+      mensagem: req.query.error || req.query.erro || null, // vermelha
+      oldEmail: req.query.oldEmail || ''
+    });
+  },
 
   // ==========================
   // REGISTRAR
@@ -72,7 +71,6 @@ const publicController = {
       const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
       let foto = req.file ? req.file.filename : null;
 
-      // Verifica se já existe usuário com esse email
       const usuarioExistente = await Usuario.findOne({ username });
       if (usuarioExistente) {
         return res.render('registrar', {
@@ -92,7 +90,6 @@ const publicController = {
         foto = novoNome;
       }
 
-      // Criptografa a senha
       const hashSenha = await bcrypt.hash(password, 10);
 
       await Usuario.create({
@@ -106,12 +103,10 @@ const publicController = {
         foto
       });
 
-      // ✅ Redireciona para login com mensagem verde
+      // ✅ Redireciona com mensagem verde (somente sucesso)
       return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
-
     } catch (err) {
       console.error(err);
-      // ❌ Mostra mensagem de erro apenas no registrar
       res.render('registrar', {
         usuario: req.body,
         mensagem: 'Erro ao criar conta. Tente novamente.'
@@ -120,7 +115,7 @@ const publicController = {
   },
 
   // ==========================
-  // PERFIL DO USUÁRIO LOGADO
+  // PERFIL
   // ==========================
   abreperfil: async (req, res) => {
     try {
@@ -141,8 +136,8 @@ const publicController = {
         erro: req.query.erro || null
       });
     } catch (err) {
-      console.error("Erro ao carregar perfil:", err);
-      res.status(500).send("Erro ao carregar perfil 😢");
+      console.error('Erro ao carregar perfil:', err);
+      res.status(500).send('Erro ao carregar perfil 😢');
     }
   },
 
@@ -157,9 +152,21 @@ const publicController = {
 
       return res.render('perfilunico', { usuario, materiais });
     } catch (err) {
-      console.error("Erro ao carregar perfil do usuário:", err);
+      console.error('Erro ao carregar perfil do usuário:', err);
       return res.redirect('/listar?erro=Erro ao carregar perfil');
     }
+  },
+
+  logout: (req, res) => {
+    req.logout(err => {
+      if (err) {
+        console.error('Erro ao deslogar:', err);
+        return res.redirect('/perfil?erro=Erro ao encerrar sessão.');
+      }
+      req.session.destroy(() => {
+        res.redirect('/login?ok=Logout realizado com sucesso!');
+      });
+    });
   },
 
   // ==========================
@@ -190,12 +197,7 @@ const publicController = {
 
       const { nome1, nome2, telefone, profissao, cidade, username, password } = req.body;
 
-      usuario.nome1 = nome1 || usuario.nome1;
-      usuario.nome2 = nome2 || usuario.nome2;
-      usuario.telefone = telefone || usuario.telefone;
-      usuario.profissao = profissao || usuario.profissao;
-      usuario.cidade = cidade || usuario.cidade;
-      usuario.username = username || usuario.username;
+      Object.assign(usuario, { nome1, nome2, telefone, profissao, cidade, username });
 
       if (password && password.trim() !== '') {
         usuario.password = await bcrypt.hash(password, 10);
@@ -262,7 +264,7 @@ const publicController = {
         erro: req.query.erro
       });
     } catch (err) {
-      console.error("Erro em abrirlistar:", err);
+      console.error('Erro em abrirlistar:', err);
       res.redirect('/?erro=Erro ao listar usuários');
     }
   },
@@ -293,15 +295,15 @@ const publicController = {
   downloadMaterial: async (req, res) => {
     try {
       const material = await Material.findById(req.params.id);
-      if (!material) return res.status(404).send("Material não encontrado");
+      if (!material) return res.status(404).send('Material não encontrado');
 
-      const caminho = path.join(__dirname, "..", "public", "assets", "fotos", material.material);
-      if (!fs.existsSync(caminho)) return res.status(404).send("Arquivo físico não encontrado");
+      const caminho = path.join(__dirname, '..', 'public', 'assets', 'fotos', material.material);
+      if (!fs.existsSync(caminho)) return res.status(404).send('Arquivo não encontrado');
 
       res.download(caminho, material.material);
     } catch (err) {
       console.error(err);
-      res.status(500).send("Erro ao baixar o material");
+      res.status(500).send('Erro ao baixar material');
     }
   },
 
@@ -313,7 +315,7 @@ const publicController = {
       if (!podeEditarOuExcluir(req.user, material.usuario))
         return res.redirect('/perfil?erro=Sem permissão');
 
-      const caminho = path.join(__dirname, "..", "public", "assets", "fotos", material.material);
+      const caminho = path.join(__dirname, '..', 'public', 'assets', 'fotos', material.material);
       if (fs.existsSync(caminho)) fs.unlinkSync(caminho);
 
       await material.deleteOne();
@@ -370,8 +372,8 @@ const publicController = {
 
   buscarMaterialPorTitulo: async (req, res) => {
     try {
-      const termo = req.query.q || "";
-      const regex = new RegExp(termo, "i");
+      const termo = req.query.q || '';
+      const regex = new RegExp(termo, 'i');
 
       const materiais = await Material.find({ titulo: regex })
         .populate('usuario', 'username foto')
@@ -388,8 +390,41 @@ const publicController = {
         userLogado: req.user || null
       });
     } catch (err) {
-      console.error("Erro ao buscar materiais:", err);
-      res.status(500).send("Erro ao buscar materiais");
+      console.error('Erro ao buscar materiais:', err);
+      res.status(500).send('Erro ao buscar materiais');
+    }
+  },
+
+  // ==========================
+  // VISUALIZAR MATERIAL ÚNICO
+  // ==========================
+  visualizarMaterial: async (req, res) => {
+    try {
+      const material = await Material.findById(req.params.id)
+        .populate('usuario')
+        .populate('disciplina')
+        .lean();
+
+      if (!material) {
+        return res.status(404).render('visualiza', {
+          disciplina: 'Material não encontrado',
+          materiais: [],
+          busca: '',
+          userLogado: req.user || null,
+          baseUrl: `${req.protocol}://${req.get('host')}`
+        });
+      }
+
+      const urlArquivo = `${req.protocol}://${req.get('host')}/assets/fotos/${material.material}`;
+
+      res.render('visualizaUnico', {
+        material,
+        urlArquivo,
+        userLogado: req.user || null
+      });
+    } catch (err) {
+      console.error('Erro ao visualizar material:', err);
+      res.status(500).send('Erro ao visualizar material');
     }
   }
 };
