@@ -40,13 +40,14 @@ const publicController = {
   // ==========================
   // LOGIN
   // ==========================
-  abrelogin: (req, res) => {
-    res.render('login', {
-      error: req.query.erro || null,
-      oldEmail: req.query.oldEmail || '',
-      ok: req.query.ok || null
-    });
-  },
+ abrelogin: (req, res) => {
+  res.render('login', {
+    ok: req.query.ok || null,                // Mensagem verde (sucesso)
+    mensagem: req.query.error || req.query.erro || null, // Mensagem vermelha (erro)
+    oldEmail: req.query.oldEmail || ''
+  });
+},
+
 
   // ==========================
   // REGISTRAR

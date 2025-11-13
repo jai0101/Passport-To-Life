@@ -63,17 +63,16 @@
     <div class="login-card">
       <h3 class="text-center mb-4">Login</h3>
 
-      <!-- ✅ Mensagem de sucesso (verde) -->
-      <% if (ok) { %>
-        <div style="background:#d4edda; color:#155724; padding:12px; border-radius:5px; margin-bottom:15px; font-weight:500;">
-          ✅ <%= ok %>
-        </div>
-      <% } %>
+     <% if (ok) { %>
+  <!-- ✅ Sucesso -->
+  <div style="background:#d4edda; color:#155724; padding:12px; border-radius:5px; margin-bottom:15px; font-weight:500;">
+    ✅ <%= ok %>
+  </div>
+<% } else if (mensagem) { %>
+  <!-- ❌ Erro -->
+  <div class="error-msg"><%= mensagem %></div>
+<% } %>
 
-      <!-- ❌ Mensagem de erro (vermelha) -->
-      <% if (mensagem) { %>
-        <div class="error-msg"><%= mensagem %></div>
-      <% } %>
 
       <!-- Formulário de login -->
       <form action="/login" method="POST">
