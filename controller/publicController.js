@@ -15,8 +15,7 @@ function podeEditarOuExcluir(user, alvoId, adminCampo = 'admin') {
   return user._id.toString() === alvoId.toString();
 }
 
-module.exports = {
-
+const publicController = {
   // ==========================
   // PÁGINAS PÚBLICAS
   // ==========================
@@ -29,6 +28,7 @@ module.exports = {
       res.render('index', { disciplinas: [] });
     }
   },
+
   abredescricao: (req, res) => res.render('descricao'),
   abredesenvolvedora: (req, res) => res.render('desenvolvedora'),
   abreconteudo: (req, res) => res.render('conteudo'),
@@ -41,10 +41,10 @@ module.exports = {
   // LOGIN
   // ==========================
   abrelogin: (req, res) => {
-    res.render('login', { 
-      error: req.query.error || null, 
-      oldEmail: req.query.oldEmail || '', 
-      ok: req.query.ok || null 
+    res.render('login', {
+      error: req.query.erro || null,
+      oldEmail: req.query.oldEmail || '',
+      ok: req.query.ok || null
     });
   },
 
@@ -67,57 +67,56 @@ module.exports = {
   },
 
   postRegistrar: async (req, res) => {
-  try {
-    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-    let foto = req.file ? req.file.filename : null;
+    try {
+      const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
+      let foto = req.file ? req.file.filename : null;
 
-    // Verifica se já existe usuário com esse email
-    const usuarioExistente = await Usuario.findOne({ username });
-    if (usuarioExistente) {
-      return res.render('registrar', {
-        usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-        mensagem: 'Usuário já cadastrado!'
+      // Verifica se já existe usuário com esse email
+      const usuarioExistente = await Usuario.findOne({ username });
+      if (usuarioExistente) {
+        return res.render('registrar', {
+          usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
+          mensagem: 'Usuário já cadastrado!'
+        });
+      }
+
+      // Converte HEIC → JPG
+      if (foto && path.extname(foto).toLowerCase() === '.heic') {
+        const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+        const novoNome = foto.replace(/\.heic$/i, '.jpg');
+        const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+
+        await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+        fs.unlinkSync(caminhoArquivo);
+        foto = novoNome;
+      }
+
+      // Criptografa a senha
+      const hashSenha = await bcrypt.hash(password, 10);
+
+      await Usuario.create({
+        nome1,
+        nome2,
+        username,
+        password: hashSenha,
+        telefone,
+        profissao,
+        cidade,
+        foto
+      });
+
+      // ✅ Redireciona para login com mensagem verde
+      return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
+
+    } catch (err) {
+      console.error(err);
+      // ❌ Mostra mensagem de erro apenas no registrar
+      res.render('registrar', {
+        usuario: req.body,
+        mensagem: 'Erro ao criar conta. Tente novamente.'
       });
     }
-
-    // Converte HEIC → JPG
-    if (foto && path.extname(foto).toLowerCase() === '.heic') {
-      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-      const novoNome = foto.replace(/\.heic$/i, '.jpg');
-      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
-      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-      fs.unlinkSync(caminhoArquivo);
-      foto = novoNome;
-    }
-
-    // Criptografa a senha
-    const hashSenha = await bcrypt.hash(password, 10);
-
-    await Usuario.create({
-      nome1,
-      nome2,
-      username,
-      password: hashSenha,
-      telefone,
-      profissao,
-      cidade,
-      foto
-    });
-
-    // ✅ Redireciona para login com mensagem de sucesso
-    return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
-
-  } catch (err) {
-    console.error(err);
-    // ❌ Mostra mensagem de erro apenas no registrar
-    res.render('registrar', {
-      usuario: req.body,
-      mensagem: 'Erro ao criar conta. Tente novamente.'
-    });
-  }
-},
-
+  },
 
   // ==========================
   // PERFIL DO USUÁRIO LOGADO
@@ -238,6 +237,9 @@ module.exports = {
     }
   },
 
+  // ==========================
+  // LISTAGEM DE USUÁRIOS
+  // ==========================
   abrirlistar: async (req, res) => {
     try {
       const usuarios = await Usuario.find().lean();
@@ -321,6 +323,9 @@ module.exports = {
     }
   },
 
+  // ==========================
+  // DISCIPLINAS E BUSCA
+  // ==========================
   abreDisciplina: async (req, res) => {
     try {
       const nomeDisciplina = req.params.disciplina.trim();
@@ -385,20 +390,7 @@ module.exports = {
       console.error("Erro ao buscar materiais:", err);
       res.status(500).send("Erro ao buscar materiais");
     }
-  },
-
-  visualizarMaterial: async (req, res) => {
-    try {
-      const material = await Material.findById(req.params.id).populate('usuario');
-      if (!material) return res.status(404).send("Material não encontrado");
-
-      const host = req.protocol + '://' + req.get('host');
-      const urlArquivo = host + '/assets/fotos/' + material.material;
-
-      res.render('visualiza', { material, urlArquivo, userLogado: req.user || null });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Erro ao visualizar material");
-    }
   }
 };
+
+module.exports = publicController;

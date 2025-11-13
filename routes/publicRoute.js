@@ -1,3 +1,6 @@
+// ==========================
+// IMPORTAÇÕES
+// ==========================
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
@@ -24,7 +27,7 @@ const Usuario = require('../models/usuario');
 const publicController = require('../controller/publicController');
 
 // ==========================
-// ROTAS PÚBLICAS (sem login)
+// ROTAS PÚBLICAS (SEM LOGIN)
 // ==========================
 router.get('/', publicController.abreindex);
 router.get('/descricao', publicController.abredescricao);
@@ -36,11 +39,11 @@ router.get('/avaliar', publicController.abreavaliacao);
 router.get('/avaliacoes', publicController.mostraravaliacao);
 
 // ==========================
-// VISUALIZA MATERIAIS POR DISCIPLINA (público)
+// VISUALIZAR MATERIAIS POR DISCIPLINA
 // ==========================
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
-// 🔎 Buscar material por título (público)
+// 🔎 Buscar material por título
 router.get('/buscar', publicController.buscarMaterialPorTitulo);
 
 // ==========================
@@ -55,7 +58,7 @@ router.post('/login', (req, res, next) => {
     if (err) return next(err);
 
     if (!user) {
-      const mensagem = encodeURIComponent(info?.message || "Falha no login");
+      const mensagem = encodeURIComponent(info?.message || 'Falha no login');
       const oldEmail = encodeURIComponent(usernameDigitado || '');
       return res.redirect(`/login?error=${mensagem}&oldEmail=${oldEmail}`);
     }
@@ -83,9 +86,7 @@ router.get('/logout', publicController.logout);
 // ==========================
 router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// ==========================
 // PERFIL DE OUTRO USUÁRIO
-// ==========================
 router.get('/perfil/:id', bloqueio, publicController.verPerfilUsuario);
 
 // ==========================
@@ -103,7 +104,6 @@ router.get('/excluir/:id', bloqueio, publicController.deletar);
 // LISTAR USUÁRIOS
 // ==========================
 router.get('/listar', bloqueio, publicController.abrirlistar);
-router.get('/usuario/:id', bloqueio, publicController.verPerfilUsuario);
 
 // ==========================
 // LISTAR MATERIAIS DO LOGADO
@@ -118,7 +118,7 @@ router.get('/abrirlistar', bloqueio, async (req, res) => {
     res.render('listarMateriais', { materiais });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Erro ao listar materiais");
+    res.status(500).send('Erro ao listar materiais');
   }
 });
 
@@ -126,7 +126,7 @@ router.get('/abrirlistar', bloqueio, async (req, res) => {
 // UPLOAD DE MATERIAL
 // ==========================
 const storageMaterial = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/assets/fotos/"),
+  destination: (req, file, cb) => cb(null, 'public/assets/fotos/'),
   filename: (req, file, cb) =>
     cb(null, Date.now() + path.extname(file.originalname))
 });
@@ -135,12 +135,12 @@ const uploadMaterial = multer({
   storage: storageMaterial,
   fileFilter: (req, file, cb) => {
     const tiposPermitidos = [
-      "application/pdf",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      'application/pdf',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
     if (tiposPermitidos.includes(file.mimetype)) cb(null, true);
-    else cb(new Error("Apenas PDF ou arquivos de Slide (PPT/PPTX) são permitidos!"));
+    else cb(new Error('Apenas PDF ou arquivos de Slide (PPT/PPTX) são permitidos!'));
   }
 });
 
@@ -166,4 +166,7 @@ router.get('/excluir/material/:id', bloqueio, publicController.deletarMaterial);
 // ==========================
 router.get('/material/visualiza/:id', publicController.visualizarMaterial);
 
+// ==========================
+// EXPORTA AS ROTAS
+// ==========================
 module.exports = router;
