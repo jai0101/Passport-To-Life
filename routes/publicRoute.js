@@ -68,18 +68,16 @@ router.post('/login', (req, res, next) => {
 
     req.logIn(user, err => {
       if (err) return next(err);
-      console.log("✅ Usuário logado:", user.username);
       return res.redirect('/perfil');
     });
   })(req, res, next);
 });
 
-
 // ==========================
 // REGISTRO DE USUÁRIO
 // ==========================
+router.get('/registrar', publicController.abreregistrar);
 router.post('/registrar', upload.single('foto'), publicController.postRegistrar);
-
 
 // ==========================
 // LOGOUT
@@ -94,25 +92,7 @@ router.get('/perfil', bloqueio, publicController.abreperfil);
 // ==========================
 // PERFIL DE OUTRO USUÁRIO
 // ==========================
-router.get('/perfil/:id', bloqueio, async (req, res) => {
-  try {
-    const usuario = await Usuario.findById(req.params.id);
-    if (!usuario) return res.status(404).send('Usuário não encontrado');
-
-    const materiais = await Material.find({ usuario: usuario._id })
-      .populate('disciplina')
-      .sort({ createdAt: -1 });
-
-    res.render('perfilunico', {
-      usuario,
-      materiais,
-      userLogado: req.user
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao carregar perfil');
-  }
-});
+router.get('/perfil/:id', bloqueio, publicController.verPerfilUsuario);
 
 // ==========================
 // EDITAR / ATUALIZAR USUÁRIO
@@ -189,19 +169,6 @@ router.get('/excluir/material/:id', bloqueio, publicController.deletarMaterial);
 // ==========================
 // VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW)
 // ==========================
-router.get('/material/visualiza/:id', async (req, res) => {
-  try {
-    const material = await Material.findById(req.params.id).populate('usuario');
-    if (!material) return res.status(404).send("Material não encontrado");
-
-    const host = req.protocol + '://' + req.get('host');
-    const urlArquivo = host + '/assets/fotos/' + material.material;
-
-    res.render('visualiza', { material, urlArquivo, userLogado: req.user || null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Erro ao visualizar material");
-  }
-});
+router.get('/material/visualiza/:id', publicController.visualizarMaterial);
 
 module.exports = router;
