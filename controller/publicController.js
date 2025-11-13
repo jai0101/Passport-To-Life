@@ -67,59 +67,57 @@ module.exports = {
   },
 
   postRegistrar: async (req, res) => {
-    try {
-      const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-      let foto = req.file ? req.file.filename : null;
+  try {
+    const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
+    let foto = req.file ? req.file.filename : null;
 
-      const usuarioExistente = await Usuario.findOne({ username });
-      if (usuarioExistente) {
-        return res.render('registrar', {
-          usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-          mensagem: 'Usuário já cadastrado!'
-        });
-      }
-
-      if (foto && path.extname(foto).toLowerCase() === '.heic') {
-        const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-        const novoNome = foto.replace(/\.heic$/i, '.jpg');
-        const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-        await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-        fs.unlinkSync(caminhoArquivo);
-        foto = novoNome;
-      }
-
-      const hashSenha = await bcrypt.hash(password, 10);
-
-      await Usuario.create({
-        nome1,
-        nome2,
-        username,
-        password: hashSenha,
-        telefone,
-        profissao,
-        cidade,
-        foto
-      });
-
-      return res.redirect('/login?ok=Usuário cadastrado com sucesso! Faça login para continuar.');
-    } catch (err) {
-      console.error(err);
+    // Verifica se já existe usuário com esse email
+    const usuarioExistente = await Usuario.findOne({ username });
+    if (usuarioExistente) {
       return res.render('registrar', {
-        usuario: req.body,
-        mensagem: 'Erro ao criar conta. Tente novamente.'
+        usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
+        mensagem: 'Usuário já cadastrado!'
       });
     }
-  },
 
-  // ==========================
-  // LOGOUT
-  // ==========================
-  logout: (req, res, next) => {
-    req.logout(err => {
-      if (err) return next(err);
-      res.redirect('/');
+    // Converte HEIC → JPG
+    if (foto && path.extname(foto).toLowerCase() === '.heic') {
+      const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
+      const novoNome = foto.replace(/\.heic$/i, '.jpg');
+      const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
+
+      await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
+      fs.unlinkSync(caminhoArquivo);
+      foto = novoNome;
+    }
+
+    // Criptografa a senha
+    const hashSenha = await bcrypt.hash(password, 10);
+
+    await Usuario.create({
+      nome1,
+      nome2,
+      username,
+      password: hashSenha,
+      telefone,
+      profissao,
+      cidade,
+      foto
     });
-  },
+
+    // ✅ Redireciona para login com mensagem de sucesso
+    return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
+
+  } catch (err) {
+    console.error(err);
+    // ❌ Mostra mensagem de erro apenas no registrar
+    res.render('registrar', {
+      usuario: req.body,
+      mensagem: 'Erro ao criar conta. Tente novamente.'
+    });
+  }
+},
+
 
   // ==========================
   // PERFIL DO USUÁRIO LOGADO
