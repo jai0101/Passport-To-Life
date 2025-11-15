@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require("fs");
 const { converterParaPDF } = require('../config/conversor');
+const { exec } = require('child_process');
 
 const publicController = {
 
@@ -184,39 +185,54 @@ const publicController = {
     // ----------------------
     // VISUALIZAR MATERIAL (PDF ou PPT/PPTX convertido)
     // ----------------------
-    visualizaMaterial: async (req, res) => {
-        try {
-            const material = await Material.findById(req.params.id).lean();
-            if (!material) return res.status(404).send("Material não encontrado");
+    
+visualizaMaterial: async (req, res) => {
+    try {
+        const material = await Material.findById(req.params.id).lean();
+        if (!material) return res.status(404).send("Material não encontrado");
 
-            const filePath = path.resolve(__dirname, '../public/assets/materiais', material.material);
-            if (!fs.existsSync(filePath)) return res.status(404).send("Arquivo não encontrado");
+        const filePath = path.resolve(__dirname, '../public/assets/materiais', material.material);
+        if (!fs.existsSync(filePath)) return res.status(404).send("Arquivo não encontrado");
 
-            const ext = path.extname(material.material).toLowerCase();
+        const ext = path.extname(material.material).toLowerCase();
 
-            if (ext === '.pdf') {
-                // PDF direto
-                return res.sendFile(filePath);
-            }
-
-            if (ext === '.ppt' || ext === '.pptx') {
-                // Converter PPT para PDF antes de abrir
-                try {
-                    const pdfBuffer = await converterParaPDF(filePath);
-                    res.contentType("application/pdf");
-                    return res.send(pdfBuffer);
-                } catch (convErr) {
-                    console.error("Erro na conversão PPT para PDF:", convErr);
-                    return res.status(500).send("Erro ao converter PPT para PDF. Verifique se o LibreOffice está instalado.");
-                }
-            }
-
-            return res.status(400).send("Visualização não disponível para este tipo de arquivo");
-        } catch (err) {
-            console.error(err);
-            res.status(500).send("Erro ao visualizar material");
+        if (ext === '.pdf') {
+            return res.sendFile(filePath);
         }
-    },
+
+        if (ext === '.ppt' || ext === '.pptx') {
+            // PDF destino
+            const pdfPath = filePath.replace(ext, '.pdf');
+
+            // Se já existe, envia direto
+            if (fs.existsSync(pdfPath)) {
+                return res.sendFile(pdfPath);
+            }
+
+            // Converter usando LibreOffice
+            exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(filePath)}" "${filePath}"`, (err, stdout, stderr) => {
+                if (err) {
+                    console.error("Erro na conversão:", err, stderr);
+                    return res.status(500).send("Erro ao converter PPT para PDF.");
+                }
+
+                // Espera o arquivo PDF ser criado
+                const checkPDF = setInterval(() => {
+                    if (fs.existsSync(pdfPath)) {
+                        clearInterval(checkPDF);
+                        return res.sendFile(pdfPath);
+                    }
+                }, 100);
+            });
+        } else {
+            return res.status(400).send("Visualização não disponível para este tipo de arquivo");
+        }
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Erro ao visualizar material");
+    }
+},
 
     // ----------------------
     // BUSCAR MATERIAL

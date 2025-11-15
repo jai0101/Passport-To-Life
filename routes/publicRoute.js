@@ -9,6 +9,9 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 
+// Caminho completo do LibreOffice no Windows
+const librePath = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe"`;
+
 // ===============================
 //        PÁGINAS PÚBLICAS
 // ===============================
@@ -149,14 +152,23 @@ router.get('/visualizar/:nomeArquivo', async (req, res) => {
     if (ext === '.pdf') {
       return res.sendFile(filePath);
     } else if (ext === '.ppt' || ext === '.pptx') {
-      // Converter PPT/PPTX para PDF usando LibreOffice
       const pdfPath = filePath.replace(ext, '.pdf');
-      exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(filePath)}" "${filePath}"`, (err, stdout, stderr) => {
+
+      // Executa a conversão usando LibreOffice
+      exec(`${librePath} --headless --convert-to pdf --outdir "${path.dirname(filePath)}" "${filePath}"`, (err, stdout, stderr) => {
         if (err) {
-          console.error(err, stderr);
+          console.error("Erro conversão PPT:", err, stderr);
           return res.status(500).send("Erro ao converter o arquivo. Verifique se o LibreOffice está instalado.");
         }
-        return res.sendFile(pdfPath);
+
+        // Espera 1 segundo para garantir que o arquivo foi gerado
+        setTimeout(() => {
+          if (fs.existsSync(pdfPath)) {
+            return res.sendFile(pdfPath);
+          } else {
+            return res.status(500).send("PDF não gerado após conversão.");
+          }
+        }, 1000);
       });
     } else {
       return res.status(400).send("Formato de arquivo não compatível para visualização.");
