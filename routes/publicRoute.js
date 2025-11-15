@@ -161,7 +161,7 @@ router.get('/visualizar/:nomeArquivo', async (req, res) => {
           return res.status(500).send("Erro ao converter o arquivo. Verifique se o LibreOffice está instalado.");
         }
 
-        // Espera 1 segundo para garantir que o arquivo foi gerado
+        // Aguarda 1 segundo para garantir que o PDF foi gerado
         setTimeout(() => {
           if (fs.existsSync(pdfPath)) {
             return res.sendFile(pdfPath);

@@ -7,6 +7,7 @@ const path = require('path');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const MongoStore = require('connect-mongo');
 
 // ==========================
 // Passport strategies
@@ -42,6 +43,7 @@ const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'keyboard cat',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { 
         maxAge: 24 * 60 * 60 * 1000, // 1 dia
         httpOnly: true
@@ -104,7 +106,6 @@ app.use(async (req, res, next) => {
 
     } catch (err) {
         console.error("Erro no middleware global:", err);
-
         res.locals = {
             Admin: null,
             materiais: [],
@@ -126,7 +127,6 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==========================
