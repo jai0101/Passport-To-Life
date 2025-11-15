@@ -7,6 +7,19 @@
     min-height: 100% !important;
     position: relative !important;
   }
+
+  .descricao-titulo {
+    margin-top: 20px;
+    font-weight: 600;
+  }
+
+  .material-card img {
+    width: 60px;
+  }
+
+  .material-card {
+    margin-bottom: 15px;
+  }
 </style>
 
 <body>
@@ -21,7 +34,6 @@
               <h4>⚠ Usuário não encontrado</h4>
               <a href="/" class="btn btn-primary">Voltar</a>
             </div>
-
           <% } else { %>
 
             <!-- HEADER PERFIL -->
@@ -50,7 +62,7 @@
 
             <!-- DESCRIÇÃO -->
             <div class="card-body p-4 text-black">
-              <p class="lead fw-normal mb-1">Descrição</p>
+              <p class="lead fw-normal mb-1 descricao-titulo">Descrição</p>
               <div class="p-3 bg-light rounded">
                 <p class="mb-1"><%= usuario.cidade || 'Sem cidade' %></p>
                 <p class="mb-1"><%= usuario.profissao || 'Sem profissão' %></p>
@@ -66,16 +78,20 @@
                 <p class="text-muted">Este usuário ainda não enviou materiais.</p>
               <% } else { %>
                 <% materiais.forEach(item => { %>
-                  <div class="p-3 border rounded bg-light mb-3 shadow-sm">
+                  <div class="p-3 border rounded bg-light shadow-sm material-card">
                     <h5><%= item.titulo %></h5>
                     <p class="text-muted"><%= item.conteudo %></p>
                     <p class="small">📘 Disciplina: <%= item.disciplina?.titulo || 'Sem disciplina' %></p>
 
-                    <% const arquivo = (item.material || '').toLowerCase(); %>
-                    <% if (arquivo.endsWith('.pdf')) { %>
-                      <img src="/assets/img/pdf-icon.png" width="60">
-                    <% } else { %>
-                      <img src="/assets/img/ppt-icon.png" width="60">
+                    <% if (item.material) { %>
+                      <% const arquivo = item.material.toLowerCase(); %>
+                      <% if (arquivo.endsWith('.pdf')) { %>
+                        <img src="/assets/img/pdf-icon.png" alt="PDF">
+                      <% } else if (arquivo.endsWith('.ppt') || arquivo.endsWith('.pptx')) { %>
+                        <img src="/assets/img/ppt-icon.png" alt="PPT">
+                      <% } else { %>
+                        <span>Arquivo inválido</span>
+                      <% } %>
                     <% } %>
 
                     <div class="mt-2 d-flex gap-2">

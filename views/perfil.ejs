@@ -15,12 +15,10 @@
     font-weight: 600;
     transition: 0.3s;
   }
-
   .btn-editar:hover {
     background-color: black;
     color: white;
   }
-
   .btn-excluir {
     border: 2px solid #dc3545;
     background-color: white;
@@ -28,22 +26,34 @@
     font-weight: 600;
     transition: 0.3s;
   }
-
   .btn-excluir:hover {
     background-color: #dc3545;
     color: white;
   }
-
   .btn-container {
     display: flex;
     justify-content: center;
     gap: 10px;
     margin-top: 15px;
   }
-
   .descricao-titulo {
     margin-top: 30px;
     font-weight: 600;
+  }
+  .iframe-container {
+    margin-top: 10px;
+    width: 100%;
+    height: 300px; /* menor tamanho */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .material-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .material-info {
+    flex: 1;
   }
 </style>
 
@@ -68,11 +78,9 @@
                 <img src="/assets/fotos/<%= Admin.foto || 'default.png' %>?v=<%= Date.now() %>"
                      class="img-fluid img-thumbnail"
                      style="width:140px; height:210px; object-fit:cover; border-radius:10px; position:relative;">
-
-                <!-- Botões Editar / Excluir -->
                 <div class="btn-container">
                   <a href="/editar/<%= Admin._id %>" class="btn btn-editar btn-sm">Editar</a>
-                  <a href="/delete/<%= Admin._id %>" class="btn btn-excluir btn-sm"
+                  <a href="/excluir/<%= Admin._id %>" class="btn btn-excluir btn-sm"
                      onclick="return confirm('Tem certeza que deseja excluir seu perfil? Esta ação é irreversível.');">
                      Excluir
                   </a>
@@ -125,10 +133,6 @@
                       <% disciplinasDisponiveis.forEach(d => { %>
                         <option value="<%= d._id %>"><%= d.titulo %></option>
                       <% }) %>
-                    <% } else if (disciplinas && disciplinas.length > 0) { %>
-                      <% disciplinas.forEach(d => { %>
-                        <option value="<%= d._id %>"><%= d.titulo || d.nome %></option>
-                      <% }) %>
                     <% } else { %>
                       <option disabled>Nenhuma disciplina cadastrada</option>
                     <% } %>
@@ -151,26 +155,36 @@
               <% } else { %>
                 <% materiais.forEach(item => { %>
                   <div class="p-3 border rounded bg-light mb-3 shadow-sm">
-                    <h5><%= item.titulo %></h5>
-                    <p class="text-muted"><%= item.conteudo %></p>
-                    <p class="small">📘 Disciplina: <%= item.disciplina?.titulo || 'Sem disciplina' %></p>
+                    <div class="material-box">
+                      <% if (item.material) { %>
+                        <% const arquivo = item.material.toLowerCase(); %>
+                        <% if (arquivo.endsWith('.pdf')) { %>
+                          <img src="/assets/img/pdf-icon.png" width="60" class="me-2">
+                        <% } else if (arquivo.endsWith('.ppt') || arquivo.endsWith('.pptx')) { %>
+                          <img src="/assets/img/ppt-icon.png" width="60" class="me-2">
+                        <% } else { %>
+                          <span>Arquivo inválido</span>
+                        <% } %>
+                      <% } %>
 
-                    <% const arquivo = (item.material || '').toLowerCase(); %>
-                    <% if (arquivo.endsWith('.pdf')) { %>
-                      <img src="/assets/img/pdf-icon.png" width="60">
-                    <% } else { %>
-                      <img src="/assets/img/ppt-icon.png" width="60">
+                      <div class="material-info">
+                        <h5><%= item.titulo %></h5>
+                        <p class="small text-muted">📘 Disciplina: <%= item.disciplina?.titulo || 'Sem disciplina' %></p>
+                      </div>
+                    </div>
+
+                    <!-- IFRAME DE VISUALIZAÇÃO -->
+                    <% if (item.material) { %>
+                      <iframe src="/material/visualizar/<%= item._id %>" class="iframe-container"></iframe>
                     <% } %>
 
+                    <!-- BOTÕES -->
                     <div class="mt-2 d-flex gap-2">
                       <a href="/material/download/<%= item._id %>" class="btn btn-success btn-sm">Baixar</a>
-                      <a href="/assets/fotos/<%= item.material %>" target="_blank" class="btn btn-secondary btn-sm">Visualizar</a>
-                      <% if (Admin.isAdmin || (item.usuario && item.usuario.toString() === Admin._id.toString())) { %>
-                        <a href="/disciplina/delete/<%= item._id %>" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Deseja excluir este material?');">
-                           Excluir
-                        </a>
-                      <% } %>
+                      <a href="/material/visualizar/<%= item._id %>" target="_blank" class="btn btn-primary btn-sm">Visualizar</a>
+                      <a href="/excluir/material/<%= item._id %>" 
+                         class="btn btn-danger btn-sm"
+                         onclick="return confirm('Deseja excluir este material?');">Excluir</a>
                     </div>
                   </div>
                 <% }) %>

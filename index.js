@@ -23,6 +23,7 @@ const publicRouter = require('./routes/publicRoute');
 // Conexão MongoDB
 // ==========================
 mongoose.set('strictQuery', true);
+
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -30,7 +31,6 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('✅ Conectado ao MongoDB Atlas com sucesso'))
 .catch(err => console.error('❌ Erro ao conectar:', err));
 
-// ==========================
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -42,7 +42,10 @@ const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'keyboard cat',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 dia
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000, // 1 dia
+        httpOnly: true
+    }
 });
 
 app.use(sessionMiddleware);
@@ -54,7 +57,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ==========================
-// Debug de sessão
+// Debug de sessão (opcional)
 // ==========================
 app.use((req, res, next) => {
     console.log("====== SESSION DEBUG ======");
@@ -66,31 +69,52 @@ app.use((req, res, next) => {
 });
 
 // ==========================
-// Middleware global para EJS
+// Models
 // ==========================
 const Usuario = require('./models/usuario');
 const Material = require('./models/material');
 const Disciplina = require('./models/disciplina');
 const DisciplinaDisponivel = require('./models/disciplinasDisponiveis');
 
+// ==========================
+// Middleware global para EJS
+// ==========================
 app.use(async (req, res, next) => {
     try {
         res.locals.Admin = req.user || null;
-        res.locals.materiais = req.user 
-            ? await Material.find({ usuario: req.user._id }).populate('disciplina').lean()
-            : [];
-        res.locals.disciplinas = req.user 
-            ? await Disciplina.find().lean()
-            : [];
+
+        if (req.user) {
+            const [materiais, disciplinas] = await Promise.all([
+                Material.find({ usuario: req.user._id })
+                    .populate('disciplina')
+                    .lean(),
+                Disciplina.find().lean()
+            ]);
+
+            res.locals.materiais = materiais;
+            res.locals.disciplinas = disciplinas;
+        } else {
+            res.locals.materiais = [];
+            res.locals.disciplinas = [];
+        }
+
         res.locals.disciplinasDisponiveis = await DisciplinaDisponivel.find().lean();
         res.locals.mensagem = req.query.error || req.query.ok || null;
         res.locals.oldEmail = req.query.oldEmail || '';
+
     } catch (err) {
         console.error("Erro no middleware global:", err);
-        res.locals = { 
-            Admin: null, materiais: [], disciplinas: [], disciplinasDisponiveis: [], mensagem: null, oldEmail: '' 
+
+        res.locals = {
+            Admin: null,
+            materiais: [],
+            disciplinas: [],
+            disciplinasDisponiveis: [],
+            mensagem: null,
+            oldEmail: ''
         };
     }
+
     next();
 });
 
@@ -99,8 +123,10 @@ app.use(async (req, res, next) => {
 // ==========================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==========================

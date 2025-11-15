@@ -1,0 +1,32 @@
+<%- include('cabecalho') -%>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+  }
+  .viewer {
+    width: 100%;
+    height: 100vh;
+    border: none;
+  }
+</style>
+
+<% if (ext === "pdf") { %>
+
+    <!-- PDF abre no navegador com scroll -->
+    <iframe class="viewer" src="<%= caminho %>"></iframe>
+
+<% } else { %>
+
+    <!-- PPT, DOC, XLS… navegadores NÃO abrem -->
+    <div style="padding:20px; text-align:center;">
+        <h2>Este tipo de arquivo não pode ser visualizado no navegador.</h2>
+        <p>Tipo: <%= ext.toUpperCase() %></p>
+        <a href="<%= caminho %>" class="btn btn-primary" download>
+            Clique aqui para baixar
+        </a>
+    </div>
+
+<% } %>

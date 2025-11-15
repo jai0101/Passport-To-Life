@@ -62,14 +62,14 @@
                         <!-- QUANTIDADE DE MATERIAIS -->
                         <div class="d-flex justify-content-start rounded-3 p-2 mb-2" style="background-color: #efefef;">
                           <div>
-                            <p class="small text-muted mb-1">Materiais</p>
-                            <p class="mb-0"><%= usuario.quantidadeConteudos ?? 0 %></p>
+                            <p class="small text-muted mb-1">Materiais:</p>
+                            <p class="mb-0"><%= usuario.totalMateriais  %></p>
                           </div>
                         </div>
 
                         <!-- BOTÃO PERFIL -->
                         <div class="d-flex pt-1">
-                          <a href="/usuario/<%= usuario._id %>">
+                          <a href="/perfil/<%= usuario._id %>">
                             <button type="button" class="btn btn-outline-primary me-1 flex-grow-1">
                               Ver Perfil
                             </button>

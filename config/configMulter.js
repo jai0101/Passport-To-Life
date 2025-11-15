@@ -1,15 +1,55 @@
-const multer = require('multer')
-var storage = multer.diskStorage({
-    filename: function(req,file,cb){
-        let nome = Date.now() + "-" + file.originalname
-        cb(null,nome)
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// 🟦 Garante que as pastas existem
+const fotosPath = path.join(__dirname, "../public/assets/fotos");
+const materiaisPath = path.join(__dirname, "../public/assets/materiais");
+
+if (!fs.existsSync(fotosPath)) fs.mkdirSync(fotosPath, { recursive: true });
+if (!fs.existsSync(materiaisPath)) fs.mkdirSync(materiaisPath, { recursive: true });
+
+// -------------------------------------------
+// 📌 STORAGE PARA FOTOS (PERFIL)
+// -------------------------------------------
+const storageFotos = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, fotosPath);
     },
-    destination: function(req,file,cb){
-        let path = "./public/assets/fotos"
-        cb(null,path)
+    filename: (req, file, cb) => {
+        const nome = Date.now() + "-" + file.originalname;
+        cb(null, nome);
     }
-})
+});
 
-var upload = multer({storage})
+// -------------------------------------------
+// 📌 STORAGE PARA MATERIAIS
+// -------------------------------------------
+const storageMateriais = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, materiaisPath);
+    },
+    filename: (req, file, cb) => {
+        const nome = Date.now() + path.extname(file.originalname);
+        cb(null, nome);
+    }
+});
 
-module.exports = upload
+// -------------------------------------------
+// ❌ BLOQUEAR ARQUIVOS HEIC
+// -------------------------------------------
+const fileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === ".heic") {
+        return cb(new Error("O formato HEIC não é compatível. Converta a imagem antes."), false);
+    }
+    cb(null, true);
+};
+
+// -------------------------------------------
+// EXPORTA DOIS UPLOADS
+// -------------------------------------------
+module.exports = {
+    uploadFoto: multer({ storage: storageFotos, fileFilter }),
+    uploadMaterial: multer({ storage: storageMateriais, fileFilter })
+};

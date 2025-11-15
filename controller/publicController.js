@@ -2,431 +2,299 @@ const Usuario = require('../models/usuario');
 const Material = require('../models/material');
 const DisciplinaDisponivel = require('../models/disciplinasDisponiveis');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
-
-// ==========================
-// Middleware de permissão
-// ==========================
-function podeEditarOuExcluir(user, alvoId, adminCampo = 'admin') {
-  if (!user) return false;
-  if (user[adminCampo] === true) return true;
-  return user._id.toString() === alvoId.toString();
-}
+const fs = require("fs");
+const { converterParaPDF } = require('../config/conversor');
 
 const publicController = {
-  // ==========================
-  // PÁGINAS PÚBLICAS
-  // ==========================
-  abreindex: async (req, res) => {
-    try {
-      const disciplinas = await DisciplinaDisponivel.find().sort({ titulo: 1 }).lean();
-      res.render('index', { disciplinas });
-    } catch (err) {
-      console.error(err);
-      res.render('index', { disciplinas: [] });
-    }
-  },
 
-  abredescricao: (req, res) => res.render('descricao'),
-  abredesenvolvedora: (req, res) => res.render('desenvolvedora'),
-  abreconteudo: (req, res) => res.render('conteudo'),
-  abredoacao: (req, res) => res.render('doacao'),
-  mostrarmensagem: (req, res) => res.render('mensagem'),
-  abreavaliacao: (req, res) => res.render('avaliar'),
-  mostraravaliacao: (req, res) => res.render('avaliacoes'),
+    // ----------------------
+    // PÁGINAS PÚBLICAS
+    // ----------------------
+    abreindex: (req, res) => res.render('index'),
+    abredescricao: (req, res) => res.render('descricao'),
+    abredesenvolvedora: (req, res) => res.render('desenvolvedora'),
+    abreconteudo: (req, res) => res.render('conteudo'),
+    abredoacao: (req, res) => res.render('doacao'),
+    mostrarmensagem: (req, res) => res.render('mensagem'),
+    abreavaliacao: (req, res) => res.render('avaliar'),
+    mostraravaliacao: (req, res) => res.render('avaliacoes'),
 
-  // ==========================
-  // LOGIN
-  // ==========================
-  abrelogin: (req, res) => {
-    res.render('login', {
-      ok: req.query.ok || null, // verde
-      mensagem: req.query.error || req.query.erro || null, // vermelha
-      oldEmail: req.query.oldEmail || ''
-    });
-  },
+    // ----------------------
+    // REGISTRO
+    // ----------------------
+    postRegistrar: async (req, res) => {
+        try {
+            const { username, email, password } = req.body;
+            if (!username || !email || !password) {
+                return res.redirect('/login?error=Preencha todos os campos');
+            }
 
-  // ==========================
-  // REGISTRAR
-  // ==========================
-  abreregistrar: (req, res) => {
-    res.render('registrar', {
-      usuario: {
-        nome1: '',
-        nome2: '',
-        username: '',
-        telefone: '',
-        profissao: '',
-        cidade: '',
-        foto: null
-      },
-      mensagem: null
-    });
-  },
+            const usuarioExistente = await Usuario.findOne({ email });
+            if (usuarioExistente) {
+                return res.redirect('/login?error=E-mail já cadastrado');
+            }
 
-  postRegistrar: async (req, res) => {
-    try {
-      const { nome1, nome2, username, password, telefone, profissao, cidade } = req.body;
-      let foto = req.file ? req.file.filename : null;
+            const hash = await bcrypt.hash(password, 10);
 
-      const usuarioExistente = await Usuario.findOne({ username });
-      if (usuarioExistente) {
-        return res.render('registrar', {
-          usuario: { nome1, nome2, username, telefone, profissao, cidade, foto },
-          mensagem: 'Usuário já cadastrado!'
-        });
-      }
+            const novoUsuario = new Usuario({
+                username,
+                email,
+                password: hash,
+                foto: req.file ? req.file.filename : "default.png"
+            });
 
-      // Converte HEIC → JPG
-      if (foto && path.extname(foto).toLowerCase() === '.heic') {
-        const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-        const novoNome = foto.replace(/\.heic$/i, '.jpg');
-        const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-
-        await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-        fs.unlinkSync(caminhoArquivo);
-        foto = novoNome;
-      }
-
-      const hashSenha = await bcrypt.hash(password, 10);
-
-      await Usuario.create({
-        nome1,
-        nome2,
-        username,
-        password: hashSenha,
-        telefone,
-        profissao,
-        cidade,
-        foto
-      });
-
-      // ✅ Redireciona com mensagem verde (somente sucesso)
-      return res.redirect('/login?ok=Cadastro realizado com sucesso! Faça login para continuar.');
-    } catch (err) {
-      console.error(err);
-      res.render('registrar', {
-        usuario: req.body,
-        mensagem: 'Erro ao criar conta. Tente novamente.'
-      });
-    }
-  },
-
-  // ==========================
-  // PERFIL
-  // ==========================
-  abreperfil: async (req, res) => {
-    try {
-      if (!req.user) return res.redirect('/login?erro=Você precisa estar logado');
-
-      const usuario = await Usuario.findById(req.user._id).lean();
-      const materiais = await Material.find({ usuario: req.user._id })
-        .populate('disciplina')
-        .sort({ createdAt: -1 })
-        .lean();
-      const disciplinas = await DisciplinaDisponivel.find().lean();
-
-      res.render('perfil', {
-        Admin: usuario,
-        materiais,
-        disciplinasDisponiveis: disciplinas,
-        ok: req.query.ok || null,
-        erro: req.query.erro || null
-      });
-    } catch (err) {
-      console.error('Erro ao carregar perfil:', err);
-      res.status(500).send('Erro ao carregar perfil 😢');
-    }
-  },
-
-  verPerfilUsuario: async (req, res) => {
-    try {
-      const usuario = await Usuario.findById(req.params.id).lean();
-      if (!usuario) return res.redirect('/listar?erro=Usuário não encontrado');
-
-      const materiais = await Material.find({ usuario: usuario._id })
-        .populate('disciplina')
-        .lean();
-
-      return res.render('perfilunico', { usuario, materiais });
-    } catch (err) {
-      console.error('Erro ao carregar perfil do usuário:', err);
-      return res.redirect('/listar?erro=Erro ao carregar perfil');
-    }
-  },
-
-  logout: (req, res) => {
-    req.logout(err => {
-      if (err) {
-        console.error('Erro ao deslogar:', err);
-        return res.redirect('/perfil?erro=Erro ao encerrar sessão.');
-      }
-      req.session.destroy(() => {
-        res.redirect('/login?ok=Logout realizado com sucesso!');
-      });
-    });
-  },
-
-  // ==========================
-  // EDITAR PERFIL
-  // ==========================
-  editar: async (req, res) => {
-    try {
-      const usuario = await Usuario.findById(req.params.id).lean();
-      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
-
-      if (!podeEditarOuExcluir(req.user, usuario._id))
-        return res.redirect('/perfil?erro=Sem permissão');
-
-      res.render('editarPerfil', { usuario, mensagem: null });
-    } catch (err) {
-      console.error(err);
-      res.redirect('/perfil?erro=Erro ao carregar edição');
-    }
-  },
-
-  enviaeditar: async (req, res) => {
-    try {
-      const usuario = await Usuario.findById(req.params.id);
-      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
-
-      if (!podeEditarOuExcluir(req.user, usuario._id))
-        return res.redirect('/perfil?erro=Sem permissão');
-
-      const { nome1, nome2, telefone, profissao, cidade, username, password } = req.body;
-
-      Object.assign(usuario, { nome1, nome2, telefone, profissao, cidade, username });
-
-      if (password && password.trim() !== '') {
-        usuario.password = await bcrypt.hash(password, 10);
-      }
-
-      if (req.file) {
-        let foto = req.file.filename;
-        if (path.extname(foto).toLowerCase() === '.heic') {
-          const caminhoArquivo = path.join(__dirname, '..', 'public', 'assets', 'fotos', foto);
-          const novoNome = foto.replace(/\.heic$/i, '.jpg');
-          const caminhoNovo = path.join(__dirname, '..', 'public', 'assets', 'fotos', novoNome);
-          await sharp(caminhoArquivo).jpeg({ quality: 90 }).toFile(caminhoNovo);
-          fs.unlinkSync(caminhoArquivo);
-          foto = novoNome;
+            await novoUsuario.save();
+            res.redirect('/login?ok=Conta criada com sucesso!');
+        } catch (err) {
+            console.error(err);
+            res.redirect('/login?error=Erro ao registrar');
         }
-        usuario.foto = foto;
-      }
+    },
 
-      await usuario.save();
-      return res.redirect('/perfil?ok=Perfil atualizado com sucesso!');
-    } catch (err) {
-      console.error(err);
-      res.redirect('/perfil?erro=Erro ao atualizar perfil');
-    }
-  },
+    // ----------------------
+    // PERFIL DO USUÁRIO LOGADO
+    // ----------------------
+    abreperfil: async (req, res) => {
+        try {
+            const materiais = await Material.find({ usuario: req.user._id })
+                .populate("disciplina")
+                .sort({ createdAt: -1 })
+                .lean();
 
-  deletar: async (req, res) => {
-    try {
-      const usuario = await Usuario.findById(req.params.id);
-      if (!usuario) return res.redirect('/perfil?erro=Usuário não encontrado');
+            const disciplinasDisponiveis = await DisciplinaDisponivel.find().lean();
 
-      if (!podeEditarOuExcluir(req.user, usuario._id))
-        return res.redirect('/perfil?erro=Sem permissão');
+            res.render('perfil', {
+                Admin: req.user,
+                materiais,
+                disciplinasDisponiveis
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Erro ao carregar perfil");
+        }
+    },
 
-      await Usuario.findByIdAndDelete(req.params.id);
-      req.logout(() => res.redirect('/?ok=Conta excluída com sucesso!'));
-    } catch (err) {
-      console.error(err);
-      return res.redirect('/perfil?erro=Erro ao excluir conta');
-    }
-  },
+    // ----------------------
+    // EDITAR PERFIL
+    // ----------------------
+    editar: async (req, res) => {
+        try {
+            const usuario = await Usuario.findById(req.params.id).lean();
+            if (!usuario) return res.send("Usuário não encontrado");
 
-  // ==========================
-  // LISTAGEM DE USUÁRIOS
-  // ==========================
-  abrirlistar: async (req, res) => {
-    try {
-      const usuarios = await Usuario.find().lean();
-      const contagens = await Material.aggregate([{ $group: { _id: "$usuario", total: { $sum: 1 } } }]);
+            res.render('editar', { usuario });
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao abrir edição");
+        }
+    },
 
-      const mapaContagens = {};
-      contagens.forEach(c => {
-        if (c._id) mapaContagens[c._id.toString()] = c.total;
-      });
+    enviaeditar: async (req, res) => {
+        try {
+            const { username, email } = req.body;
+            let dados = { username, email };
 
-      const usuariosComContagem = usuarios.map(u => ({
-        ...u,
-        quantidadeConteudos: mapaContagens[u._id.toString()] || 0
-      }));
+            if (req.file) dados.foto = req.file.filename;
 
-      res.render('listar', {
-        usuarios: usuariosComContagem,
-        ok: req.query.ok,
-        erro: req.query.erro
-      });
-    } catch (err) {
-      console.error('Erro em abrirlistar:', err);
-      res.redirect('/?erro=Erro ao listar usuários');
-    }
-  },
+            await Usuario.findByIdAndUpdate(req.params.id, dados);
+            res.redirect('/perfil');
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao atualizar");
+        }
+    },
 
-  // ==========================
-  // MATERIAIS
-  // ==========================
-  uploadMaterial: async (req, res) => {
-    try {
-      if (!req.user) return res.redirect('/login?erro=Faça login');
-      if (!req.file) return res.redirect('/perfil?erro=Nenhum arquivo enviado');
+    // ----------------------
+    // DELETAR USUÁRIO
+    // ----------------------
+    deletar: async (req, res) => {
+        try {
+            await Usuario.findByIdAndDelete(req.params.id);
+            res.redirect('/listar');
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao deletar");
+        }
+    },
 
-      await Material.create({
-        usuario: req.user._id,
-        disciplina: req.body.disciplina,
-        titulo: req.body.titulo,
-        conteudo: req.body.conteudo,
-        material: req.file.filename
-      });
+    // ----------------------
+    // LISTAR USUÁRIOS (com total de materiais)
+    // ----------------------
+    abrirlistar: async (req, res) => {
+        try {
+            const usuarios = await Usuario.find().lean();
 
-      res.redirect('/perfil?ok=Material enviado com sucesso!');
-    } catch (err) {
-      console.error(err);
-      res.redirect('/perfil?erro=Erro no upload');
-    }
-  },
+            const usuariosComContagem = await Promise.all(
+                usuarios.map(async (usuario) => {
+                    const totalMateriais = await Material.countDocuments({ usuario: usuario._id });
+                    return { ...usuario, totalMateriais };
+                })
+            );
 
-  downloadMaterial: async (req, res) => {
-    try {
-      const material = await Material.findById(req.params.id);
-      if (!material) return res.status(404).send('Material não encontrado');
+            res.render('listar', { usuarios: usuariosComContagem });
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao listar usuários");
+        }
+    },
 
-      const caminho = path.join(__dirname, '..', 'public', 'assets', 'fotos', material.material);
-      if (!fs.existsSync(caminho)) return res.status(404).send('Arquivo não encontrado');
+    // ----------------------
+    // PERFIL DE OUTRO USUÁRIO
+    // ----------------------
+    verPerfilUsuario: async (req, res) => {
+        try {
+            const usuario = await Usuario.findById(req.params.id).lean();
+            if (!usuario) return res.send("Usuário não encontrado");
 
-      res.download(caminho, material.material);
-    } catch (err) {
-      console.error(err);
-      res.status(500).send('Erro ao baixar material');
-    }
-  },
+            const materiais = await Material.find({ usuario: usuario._id })
+                .populate("disciplina")
+                .lean();
 
-  deletarMaterial: async (req, res) => {
-    try {
-      const material = await Material.findById(req.params.id);
-      if (!material) return res.redirect('/perfil?erro=Material não encontrado');
+            res.render("perfilunico", {
+                usuario,
+                materiais,
+                userLogado: req.user
+            });
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao buscar usuário");
+        }
+    },
 
-      if (!podeEditarOuExcluir(req.user, material.usuario))
-        return res.redirect('/perfil?erro=Sem permissão');
+    // ----------------------
+    // VISUALIZAR DISCIPLINA
+    // ----------------------
+    abreDisciplina: async (req, res) => {
+        try {
+            const disciplina = await DisciplinaDisponivel.findOne({
+                titulo: req.params.disciplina
+            }).lean();
 
-      const caminho = path.join(__dirname, '..', 'public', 'assets', 'fotos', material.material);
-      if (fs.existsSync(caminho)) fs.unlinkSync(caminho);
+            if (!disciplina) return res.send("Disciplina não encontrada!");
 
-      await material.deleteOne();
-      res.redirect('/perfil?ok=Material excluído com sucesso!');
-    } catch (err) {
-      console.error(err);
-      res.redirect('/perfil?erro=Erro ao excluir material');
-    }
-  },
+            const materiais = await Material.find({ disciplina: disciplina._id }).lean();
+            res.render("disciplina", { disciplina, materiais });
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao abrir disciplina");
+        }
+    },
 
-  // ==========================
-  // DISCIPLINAS E BUSCA
-  // ==========================
-  abreDisciplina: async (req, res) => {
-    try {
-      const nomeDisciplina = req.params.disciplina.trim();
-      const busca = req.query.busca || '';
+    // ----------------------
+    // VISUALIZAR MATERIAL (PDF ou PPT/PPTX)
+    // ----------------------
+    visualizaMaterial: async (req, res) => {
+        try {
+            const material = await Material.findById(req.params.id).lean();
+            if (!material) return res.status(404).send("Material não encontrado");
 
-      const disciplina = await DisciplinaDisponivel.findOne({
-        titulo: { $regex: new RegExp('^' + nomeDisciplina + '$', 'i') }
-      }).lean();
+            const filePath = path.resolve(__dirname, '../public/assets/materiais', material.material);
+            if (!fs.existsSync(filePath)) return res.status(404).send("Arquivo não encontrado");
 
-      if (!disciplina) {
-        return res.render('visualiza', {
-          disciplina: nomeDisciplina,
-          materiais: [],
-          busca,
-          userLogado: req.user || null,
-          baseUrl: `${req.protocol}://${req.get('host')}`
+            const ext = path.extname(material.material).toLowerCase();
+
+            if (ext === '.pdf') {
+                return res.sendFile(filePath);
+            }
+
+            if (ext === '.ppt' || ext === '.pptx') {
+                try {
+                    const pdfBuffer = await converterParaPDF(filePath);
+                    res.contentType("application/pdf");
+                    return res.send(pdfBuffer);
+                } catch (convErr) {
+                    console.error("Erro na conversão PPT para PDF:", convErr);
+                    return res.status(500).send("Não foi possível converter o PPT para PDF. Você pode baixar o arquivo diretamente.");
+                }
+            }
+
+            return res.status(400).send("Visualização não disponível para este tipo de arquivo");
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).send("Erro ao visualizar material");
+        }
+    },
+
+    // ----------------------
+    // BUSCAR MATERIAL
+    // ----------------------
+    buscarMaterialPorTitulo: async (req, res) => {
+        try {
+            const { q } = req.query;
+            const materiais = await Material.find({ titulo: new RegExp(q, "i") }).lean();
+            res.render("buscar", { materiais, q });
+        } catch (err) {
+            console.error(err);
+            res.send("Erro na busca");
+        }
+    },
+
+    // ----------------------
+    // UPLOAD MATERIAL
+    // ----------------------
+    uploadMaterial: async (req, res) => {
+        try {
+            const novo = new Material({
+                titulo: req.body.titulo,
+                conteudo: req.body.conteudo,
+                disciplina: req.body.disciplina,
+                usuario: req.user._id,
+                material: req.file.filename
+            });
+            await novo.save();
+            res.redirect('/perfil');
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao enviar material");
+        }
+    },
+
+    // ----------------------
+    // DOWNLOAD MATERIAL
+    // ----------------------
+    downloadMaterial: async (req, res) => {
+        try {
+            const material = await Material.findById(req.params.id).lean();
+            if (!material) return res.send("Arquivo não encontrado");
+
+            const filePath = path.resolve("public/assets/materiais", material.material);
+            if (!fs.existsSync(filePath)) return res.send("Arquivo não encontrado no servidor");
+
+            res.download(filePath);
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao baixar");
+        }
+    },
+
+    // ----------------------
+    // EXCLUIR MATERIAL
+    // ----------------------
+    deletarMaterial: async (req, res) => {
+        try {
+            await Material.findByIdAndDelete(req.params.id);
+            res.redirect('/perfil');
+        } catch (err) {
+            console.error(err);
+            res.send("Erro ao excluir");
+        }
+    },
+
+    // ----------------------
+    // LOGOUT
+    // ----------------------
+    logout: (req, res) => {
+        req.logout(err => {
+            if (err) {
+                console.error("Erro ao fazer logout:", err);
+                return res.redirect('/perfil?erro=Erro ao sair');
+            }
+            return res.redirect('/login?ok=Logout realizado!');
         });
-      }
-
-      const filtro = { disciplina: disciplina._id };
-      if (busca.trim() !== '') filtro.titulo = { $regex: busca, $options: 'i' };
-
-      const materiais = await Material.find(filtro)
-        .populate('usuario')
-        .populate('disciplina')
-        .sort({ createdAt: -1 })
-        .lean();
-
-      res.render('visualiza', {
-        disciplina: disciplina.titulo,
-        materiais,
-        busca,
-        userLogado: req.user || null,
-        baseUrl: `${req.protocol}://${req.get('host')}`
-      });
-    } catch (err) {
-      console.error('Erro ao abrir disciplina:', err);
-      res.redirect('/?erro=Erro ao carregar disciplina');
     }
-  },
 
-  buscarMaterialPorTitulo: async (req, res) => {
-    try {
-      const termo = req.query.q || '';
-      const regex = new RegExp(termo, 'i');
-
-      const materiais = await Material.find({ titulo: regex })
-        .populate('usuario', 'username foto')
-        .populate('disciplina', 'titulo')
-        .sort({ createdAt: -1 })
-        .lean();
-
-      const disciplinas = await DisciplinaDisponivel.find().sort({ titulo: 1 }).lean();
-
-      res.render('buscaMateriais', {
-        termo,
-        materiais,
-        disciplinas,
-        userLogado: req.user || null
-      });
-    } catch (err) {
-      console.error('Erro ao buscar materiais:', err);
-      res.status(500).send('Erro ao buscar materiais');
-    }
-  },
-
-  // ==========================
-  // VISUALIZAR MATERIAL ÚNICO
-  // ==========================
-  visualizarMaterial: async (req, res) => {
-    try {
-      const material = await Material.findById(req.params.id)
-        .populate('usuario')
-        .populate('disciplina')
-        .lean();
-
-      if (!material) {
-        return res.status(404).render('visualiza', {
-          disciplina: 'Material não encontrado',
-          materiais: [],
-          busca: '',
-          userLogado: req.user || null,
-          baseUrl: `${req.protocol}://${req.get('host')}`
-        });
-      }
-
-      const urlArquivo = `${req.protocol}://${req.get('host')}/assets/fotos/${material.material}`;
-
-      res.render('visualizaUnico', {
-        material,
-        urlArquivo,
-        userLogado: req.user || null
-      });
-    } catch (err) {
-      console.error('Erro ao visualizar material:', err);
-      res.status(500).send('Erro ao visualizar material');
-    }
-  }
 };
 
 module.exports = publicController;

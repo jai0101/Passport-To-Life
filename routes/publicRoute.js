@@ -1,34 +1,17 @@
-// ==========================
-// IMPORTAÇÕES
-// ==========================
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const multer = require('multer');
+const bloqueio = require('../config/bloqueio');
+const { uploadFoto, uploadMaterial } = require('../config/configMulter');
+const publicController = require('../controller/publicController');
+const Material = require('../models/material');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+const { exec } = require('child_process');
 
-// ==========================
-// MIDDLEWARES
-// ==========================
-const bloqueio = require('../config/bloqueio');
-const upload = require('../config/configMulter');
-
-// ==========================
-// MODELS
-// ==========================
-const Material = require('../models/material');
-const Usuario = require('../models/usuario');
-
-// ==========================
-// CONTROLLER
-// ==========================
-const publicController = require('../controller/publicController');
-
-// ==========================
-// ROTAS PÚBLICAS (SEM LOGIN)
-// ==========================
+// ===============================
+//        PÁGINAS PÚBLICAS
+// ===============================
 router.get('/', publicController.abreindex);
 router.get('/descricao', publicController.abredescricao);
 router.get('/desenvolvedora', publicController.abredesenvolvedora);
@@ -38,18 +21,31 @@ router.get('/mensagem', publicController.mostrarmensagem);
 router.get('/avaliar', publicController.abreavaliacao);
 router.get('/avaliacoes', publicController.mostraravaliacao);
 
-// ==========================
-// VISUALIZAR MATERIAIS POR DISCIPLINA
-// ==========================
+// ===============================
+//     VISUALIZAR DISCIPLINA
+// ===============================
 router.get('/visualiza/:disciplina', publicController.abreDisciplina);
 
-// 🔎 Buscar material por título
+// ===============================
+//       VISUALIZAR MATERIAL (PDF ou PPT/PPTX)
+// ===============================
+router.get('/material/visualizar/:id', publicController.visualizaMaterial);
+
+// ===============================
+//            BUSCA
+// ===============================
 router.get('/buscar', publicController.buscarMaterialPorTitulo);
 
-// ==========================
-// LOGIN
-// ==========================
-router.get('/login', publicController.abrelogin);
+// ===============================
+//            LOGIN
+// ===============================
+router.get('/login', (req, res) => {
+  res.render('login', {
+    mensagem: req.query.error || null,
+    ok: req.query.ok || null,
+    oldEmail: req.query.oldEmail || ""
+  });
+});
 
 router.post('/login', (req, res, next) => {
   const usernameDigitado = req.body.username;
@@ -58,7 +54,7 @@ router.post('/login', (req, res, next) => {
     if (err) return next(err);
 
     if (!user) {
-      const mensagem = encodeURIComponent(info?.message || 'Falha no login');
+      const mensagem = encodeURIComponent(info?.message || "Falha no login");
       const oldEmail = encodeURIComponent(usernameDigitado || '');
       return res.redirect(`/login?error=${mensagem}&oldEmail=${oldEmail}`);
     }
@@ -70,103 +66,106 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
-// ==========================
-// REGISTRO DE USUÁRIO
-// ==========================
-router.get('/registrar', publicController.abreregistrar);
-router.post('/registrar', upload.single('foto'), publicController.postRegistrar);
+// ===============================
+//            REGISTRO
+// ===============================
+router.post('/registrar', uploadFoto.single('foto'), publicController.postRegistrar);
 
-// ==========================
-// LOGOUT
-// ==========================
+// ===============================
+//            LOGOUT
+// ===============================
 router.get('/logout', publicController.logout);
 
-// ==========================
-// PERFIL DO USUÁRIO LOGADO
-// ==========================
+// ===============================
+//          PERFIL LOGADO
+// ===============================
 router.get('/perfil', bloqueio, publicController.abreperfil);
 
-// PERFIL DE OUTRO USUÁRIO
+// ===============================
+//     PERFIL DE OUTRO USUÁRIO
+// ===============================
 router.get('/perfil/:id', bloqueio, publicController.verPerfilUsuario);
 
-// ==========================
-// EDITAR / ATUALIZAR USUÁRIO
-// ==========================
+// ===============================
+//             EDITAR
+// ===============================
 router.get('/editar/:id', bloqueio, publicController.editar);
-router.post('/editar/:id', bloqueio, upload.single('foto'), publicController.enviaeditar);
+router.post('/editar/:id', bloqueio, uploadFoto.single('foto'), publicController.enviaeditar);
 
-// ==========================
-// EXCLUIR USUÁRIO
-// ==========================
+// ===============================
+//        EXCLUIR USUÁRIO
+// ===============================
 router.get('/excluir/:id', bloqueio, publicController.deletar);
 
-// ==========================
-// LISTAR USUÁRIOS
-// ==========================
+// ===============================
+//         LISTAR USUÁRIOS
+// ===============================
 router.get('/listar', bloqueio, publicController.abrirlistar);
 
-// ==========================
-// LISTAR MATERIAIS DO LOGADO
-// ==========================
+// ===============================
+//   LISTAR MATERIAIS DO LOGADO
+// ===============================
 router.get('/abrirlistar', bloqueio, async (req, res) => {
   try {
     const materiais = await Material.find({ usuario: req.user._id })
       .populate('disciplina')
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
 
     res.render('listarMateriais', { materiais });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Erro ao listar materiais');
+    res.status(500).send("Erro ao listar materiais");
   }
 });
 
-// ==========================
-// UPLOAD DE MATERIAL
-// ==========================
-const storageMaterial = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/assets/fotos/'),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname))
-});
+// ===============================
+//         UPLOAD MATERIAL
+// ===============================
+router.post('/disciplina/upload', bloqueio, uploadMaterial.single('material'), publicController.uploadMaterial);
 
-const uploadMaterial = multer({
-  storage: storageMaterial,
-  fileFilter: (req, file, cb) => {
-    const tiposPermitidos = [
-      'application/pdf',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    ];
-    if (tiposPermitidos.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Apenas PDF ou arquivos de Slide (PPT/PPTX) são permitidos!'));
-  }
-});
-
-router.post(
-  '/disciplina/upload',
-  bloqueio,
-  uploadMaterial.single('material'),
-  publicController.uploadMaterial
-);
-
-// ==========================
-// DOWNLOAD DE MATERIAL
-// ==========================
+// ===============================
+//        DOWNLOAD MATERIAL
+// ===============================
 router.get('/material/download/:id', publicController.downloadMaterial);
 
-// ==========================
-// EXCLUIR MATERIAL
-// ==========================
+// ===============================
+//        EXCLUIR MATERIAL
+// ===============================
 router.get('/excluir/material/:id', bloqueio, publicController.deletarMaterial);
 
-// ==========================
-// VISUALIZAR MATERIAL (PDF/PPT COM PREVIEW)
-// ==========================
-router.get('/material/visualiza/:id', publicController.visualizarMaterial);
+// ===============================
+//      VISUALIZAR ARQUIVO DIRETO
+// ===============================
+router.get('/visualizar/:nomeArquivo', async (req, res) => {
+  const nomeArquivo = req.params.nomeArquivo;
+  const filePath = path.join(__dirname, '../public/assets/materiais', nomeArquivo);
+  const ext = path.extname(nomeArquivo).toLowerCase();
 
-// ==========================
-// EXPORTA AS ROTAS
-// ==========================
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Arquivo não encontrado");
+  }
+
+  try {
+    if (ext === '.pdf') {
+      // PDF: enviar direto
+      return res.sendFile(filePath);
+    } else if (ext === '.ppt' || ext === '.pptx') {
+      // PPT/PPTX: converter para PDF usando LibreOffice
+      const pdfPath = filePath.replace(ext, '.pdf');
+      exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(filePath)}" "${filePath}"`, (err, stdout, stderr) => {
+        if (err) {
+          console.error(err, stderr);
+          return res.status(500).send("Erro ao converter o arquivo. Verifique se é compatível.");
+        }
+        return res.sendFile(pdfPath);
+      });
+    } else {
+      return res.status(400).send("Formato de arquivo não compatível para visualização.");
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao processar o arquivo.");
+  }
+});
+
 module.exports = router;
