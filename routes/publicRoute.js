@@ -134,7 +134,7 @@ router.get('/material/download/:id', publicController.downloadMaterial);
 router.get('/excluir/material/:id', bloqueio, publicController.deletarMaterial);
 
 // ===============================
-//      VISUALIZAR ARQUIVO DIRETO
+//      VISUALIZAR ARQUIVO DIRETO (PDF ou PPT/PPTX)
 // ===============================
 router.get('/visualizar/:nomeArquivo', async (req, res) => {
   const nomeArquivo = req.params.nomeArquivo;
@@ -147,15 +147,14 @@ router.get('/visualizar/:nomeArquivo', async (req, res) => {
 
   try {
     if (ext === '.pdf') {
-      // PDF: enviar direto
       return res.sendFile(filePath);
     } else if (ext === '.ppt' || ext === '.pptx') {
-      // PPT/PPTX: converter para PDF usando LibreOffice
+      // Converter PPT/PPTX para PDF usando LibreOffice
       const pdfPath = filePath.replace(ext, '.pdf');
       exec(`soffice --headless --convert-to pdf --outdir "${path.dirname(filePath)}" "${filePath}"`, (err, stdout, stderr) => {
         if (err) {
           console.error(err, stderr);
-          return res.status(500).send("Erro ao converter o arquivo. Verifique se é compatível.");
+          return res.status(500).send("Erro ao converter o arquivo. Verifique se o LibreOffice está instalado.");
         }
         return res.sendFile(pdfPath);
       });

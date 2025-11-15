@@ -182,7 +182,7 @@ const publicController = {
     },
 
     // ----------------------
-    // VISUALIZAR MATERIAL (PDF ou PPT/PPTX)
+    // VISUALIZAR MATERIAL (PDF ou PPT/PPTX convertido)
     // ----------------------
     visualizaMaterial: async (req, res) => {
         try {
@@ -195,22 +195,23 @@ const publicController = {
             const ext = path.extname(material.material).toLowerCase();
 
             if (ext === '.pdf') {
+                // PDF direto
                 return res.sendFile(filePath);
             }
 
             if (ext === '.ppt' || ext === '.pptx') {
+                // Converter PPT para PDF antes de abrir
                 try {
                     const pdfBuffer = await converterParaPDF(filePath);
                     res.contentType("application/pdf");
                     return res.send(pdfBuffer);
                 } catch (convErr) {
                     console.error("Erro na conversão PPT para PDF:", convErr);
-                    return res.status(500).send("Não foi possível converter o PPT para PDF. Você pode baixar o arquivo diretamente.");
+                    return res.status(500).send("Erro ao converter PPT para PDF. Verifique se o LibreOffice está instalado.");
                 }
             }
 
             return res.status(400).send("Visualização não disponível para este tipo de arquivo");
-
         } catch (err) {
             console.error(err);
             res.status(500).send("Erro ao visualizar material");
